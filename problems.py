@@ -93,6 +93,6 @@ comp_problems = [
         "wizards": {"Harry Potter": ((0, 0), 2), "Ron Weasley": ((0, 1), 2), "Hermione Granger": ((0, 2), 2)},
         "death_eaters": {'death_eater1': [(0, 1), (1, 1)], 'death_eater2': [(3, 2), (4, 2), (4, 3)]},
         "horcruxes": [(0, 3), (1, 3), (3, 0), (2, 4), (4, 4), (5, 0)],
-    } 
+    }
 
 ]
