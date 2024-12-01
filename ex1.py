@@ -12,6 +12,25 @@ ids = ["111111111", "111111111"]
 class HarryPotterProblem(search.Problem):
 
     def __init__(self, initial):
+        def bfs(map, start):
+            rows, cols = len(map), len(map[0])
+            distances = [[float('inf')] * cols for _ in range(rows)]
+            directions = [(-1, 0), (1, 0), (0, -1), (0, 1)]
+
+            queue = deque([start])
+            distances[start[0]][start[1]] = 0
+
+            while queue:
+                x, y = queue.popleft()
+                current_dist = distances[x][y]
+
+                for dx, dy in directions:
+                    nx, ny = x + dx, y + dy
+                    if 0 <= nx < rows and 0 <= ny < cols and map[nx][ny] != 'I' and distances[nx][ny] == float('inf'):
+                        distances[nx][ny] = current_dist + 1
+                        queue.append((nx, ny))
+
+            return distances
         def update_death_eaters_path(death_eaters):
             def compute_path(death_eater):
                 path = death_eater + list(reversed(death_eater[1:len(death_eater) - 1]))
@@ -37,6 +56,7 @@ class HarryPotterProblem(search.Problem):
                 if self.map[i][j] == 'V':
                     self.voldemort_loc = (i, j)
                     break
+        self.shortest_dist_from_voldemort = bfs(self.map, self.voldemort_loc)
         initial_state = json.dumps(initial_state)
         search.Problem.__init__(self, initial_state)
 
@@ -120,32 +140,8 @@ class HarryPotterProblem(search.Problem):
         Heuristic function for A* search.
         Estimates the minimum number of moves needed to reach the goal.
         """
-
-        def dfs(map, start, impassable_coords, target_value='V'):
-            directions = [(-1, 0), (1, 0), (0, -1), (0, 1)]
-            rows, cols = len(map), len(map[0])
-            stack = [start]
-            visited = set()
-            while stack:
-                x, y = stack.pop()
-                if map[x][y] == 'I' or (x, y) in impassable_coords:
-                    # print(f"can't pass here ({x},{y}) ")
-                    continue
-
-                if map[x][y] == target_value:
-                    return True
-                visited.add((x, y))
-
-                for dx, dy in directions:
-                    nx, ny = x + dx, y + dy
-                    if 0 <= nx < rows and 0 <= ny < cols and (nx, ny) not in visited:
-                        stack.append((nx, ny))
-            return False
-
         def manhattan_distance(loc1, loc2):
             return abs(loc1[0] - loc2[0]) + abs(loc1[1] - loc2[1])
-        def mdot_distance(loc1, loc2):
-            return abs(loc1[0] - loc2[0]) * abs(loc1[1] - loc2[1])
         cost = 0
         state = json.loads(node.state)
         wizards = state['wizards']
@@ -168,12 +164,12 @@ class HarryPotterProblem(search.Problem):
         if remaining_horcruxes == 0:
             self.all_horcrux_destroyed_turn = min([self.move_num, self.all_horcrux_destroyed_turn])
             if self.move_num > self.all_horcrux_destroyed_turn:
-                prev = state['prev_move']
-                if not dfs(self.map, wizards['Harry Potter'][0],[tuple(prev)]):
-                    cost += 40 # penalize if it's going to a dead end
-                if wizards['Harry Potter'][0] == prev:
-                    cost += 20 # penalize for waiting
-                cost += manhattan_distance(wizards['Harry Potter'][0], self.voldemort_loc)
+                # prev = state['prev_move']
+                pass
+                x, y = state['wizards']['Harry Potter'][0]
+                cost += self.shortest_dist_from_voldemort[x][y]
+
+                # cost += manhattan_distance(wizards['Harry Potter'][0], self.voldemort_loc)
         else:
             # every horocrux is 50 points so the h is monotonically decreasing
             cost += 50 * remaining_horcruxes
