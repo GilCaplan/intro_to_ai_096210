@@ -126,6 +126,7 @@ class HarryPotterProblem(search.Problem):
 
         state = json.loads(node.state)
         wizards = state['wizards']
+        death_eater_paths = state['death_eaters']
         horcruxes = state['horcruxes']
 
         if horcruxes:
@@ -145,14 +146,22 @@ class HarryPotterProblem(search.Problem):
         else:
             horcrux_cost = 0
 
+        death_eater_penalty = 0
+        for wizard_name in wizards:
+            wizard_loc = wizards[wizard_name][0]
+
+            for death_eater, path in death_eater_paths.items():
+                next_position = path[(self.move_num + 1) % len(path)]
+                for offset in [(0, 1), (0, -1), (1, 0), (-1, 0)]:
+                    new_loc = (wizard_loc[0] + offset[0], wizard_loc[1] + offset[1])
+                    if new_loc == next_position:
+                        death_eater_penalty += 10  # Apply penalty for being in the same spot as a Death Eater
+
         harry_loc = wizards.get("Harry Potter", [(0, 0)])[0]
         voldemort_cost = manhattan_distance(harry_loc, self.voldemort_loc) if not horcruxes else 0
-
-        return horcrux_cost + voldemort_cost
-
         # return 1
-        # return manhattan_distance(harry_loc, self.voldemort_loc) + len(state['horcruxes'])  #TODO: improve it
-    
+        return horcrux_cost + voldemort_cost + death_eater_penalty
+
         # IDEAS:   1. distance from harry to voldemort + #horcruxes
         #          2. distance from harry to voldemort + min_distance from the wizards to the horcruxes
     
