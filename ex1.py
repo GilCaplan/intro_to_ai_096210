@@ -1,5 +1,6 @@
 import itertools
 import json
+import sys
 from copy import deepcopy
 from collections import deque
 
@@ -22,6 +23,7 @@ class HarryPotterProblem(search.Problem):
             return death_eater_paths
         self.map = initial['map']
         self.move_num = 0
+        self.all_horcrux_destroyed_turn = sys.maxsize
         self.voldemort_killed = False
         initial_state = {
             'wizards': initial['wizards'],
@@ -73,7 +75,7 @@ class HarryPotterProblem(search.Problem):
         for wizard in wizards:
             actions.append(get_move_actions(wizards[wizard][0], wizard) + get_destroy_horcrux_actions(wizards[wizard][0], wizard)\
                          + get_wait_actions(wizard) + get_kill_voldemort_action(wizards[wizard][0], wizard))
-        actions = tuple(itertools.product(*actions))   #TODO: check if this is the correct way to get all possible actions
+        actions = tuple(itertools.product(*actions))
         return actions
 
     def result(self, state, action):
@@ -142,6 +144,8 @@ class HarryPotterProblem(search.Problem):
 
         def manhattan_distance(loc1, loc2):
             return abs(loc1[0] - loc2[0]) + abs(loc1[1] - loc2[1])
+        def mdot_distance(loc1, loc2):
+            return abs(loc1[0] - loc2[0]) * abs(loc1[1] - loc2[1])
         cost = 0
         state = json.loads(node.state)
         wizards = state['wizards']
@@ -159,15 +163,20 @@ class HarryPotterProblem(search.Problem):
         #ToDo implement avoid deatheaters
 
         #ToDo implement Harry searching for Voldemort
+        #ToDo calculate shortest path to finding Voldermort
+        # pre compute nodes distance from voldermort using BFS to get shortest paths tree
         if remaining_horcruxes == 0:
-            prev = state['prev_move']
-            if not dfs(self.map, wizards['Harry Potter'][0],[prev]):
-                cost += 30
-            if wizards['Harry Potter'][0] == prev:
-                cost += 30
-            cost += manhattan_distance(wizards['Harry Potter'][0], self.voldemort_loc)
+            self.all_horcrux_destroyed_turn = min([self.move_num, self.all_horcrux_destroyed_turn])
+            if self.move_num > self.all_horcrux_destroyed_turn:
+                prev = state['prev_move']
+                if not dfs(self.map, wizards['Harry Potter'][0],[tuple(prev)]):
+                    cost += 40 # penalize if it's going to a dead end
+                if wizards['Harry Potter'][0] == prev:
+                    cost += 20 # penalize for waiting
+                cost += manhattan_distance(wizards['Harry Potter'][0], self.voldemort_loc)
         else:
-            cost += 50
+            # every horocrux is 50 points so the h is monotonically decreasing
+            cost += 50 * remaining_horcruxes
         return cost
 
 
