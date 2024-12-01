@@ -142,57 +142,34 @@ class HarryPotterProblem(search.Problem):
 
         def manhattan_distance(loc1, loc2):
             return abs(loc1[0] - loc2[0]) + abs(loc1[1] - loc2[1])
-
+        cost = 0
         state = json.loads(node.state)
         wizards = state['wizards']
         death_eater_paths = state['death_eaters']
         horcruxes = state['horcruxes']
-        horcrux_cost = 0
-        horcruxes_num = sum([not val for _, val in state['horcruxes'].values()])
-        if horcruxes_num > 0:
-            wizard_names = list(wizards.keys())
-            horcrux_locations = [horcruxes[h][0] for h in horcruxes]
 
-            # Compute distances and sort pairs by distance
-            pairs = sorted(
-                [(manhattan_distance(wizards[w][0], h), w, h_idx)
-                 for w in wizard_names
-                 for h_idx, h in enumerate(horcrux_locations)]
-            )
+        # deal with destroying hocruxes
+        remaining_horcruxes = sum(1 for horcrux in horcruxes.values() if not horcrux[1])
+        horcrux_dist = 0
+        if remaining_horcruxes > 0:
+            for wizard in wizards.keys():
+                horcrux_dist += min(manhattan_distance(wizards[wizard][0], coord)\
+                             for coord, _ in horcruxes.values())
+            cost += remaining_horcruxes + horcrux_dist
+        #ToDo implement avoid deatheaters
 
-            assigned_horcruxes = set()
-            horcrux_cost = 0
-            for dist, wizard, horcrux in pairs:
-                if horcrux not in assigned_horcruxes:
-                    assigned_horcruxes.add(horcrux)
-                    horcrux_cost += dist
-                    if len(assigned_horcruxes) == len(horcrux_locations):
-                        break
-        death_eater_penalty = 0
-        for wizard_name in wizards:
-            wizard_loc = wizards[wizard_name][0]
-
-            for death_eater, path in death_eater_paths.items():
-                next_position = path[(self.move_num + 1) % len(path)]
-                for offset in [(0, 1), (0, -1), (1, 0), (-1, 0)]:
-                    new_loc = (wizard_loc[0] + offset[0], wizard_loc[1] + offset[1])
-                    if new_loc == next_position:
-                        death_eater_penalty += 10
-
-        harry_loc = wizards.get("Harry Potter", [str((0, 0))])[0]
-        voldemort_cost = manhattan_distance(harry_loc, self.voldemort_loc) if horcruxes_num == 0 else 0
-        deadend_penalty = 0
-        if horcruxes_num == 0:
-            # figure out how to find voldermort
-            # implement search function to see if deadend
-            if not dfs(self.map, harry_loc, [state['prev_move']]):
-                deadend_penalty += 30
-
-        cost = horcrux_cost + voldemort_cost + death_eater_penalty + horcruxes_num*2 + deadend_penalty
+        #ToDo implement Harry searching for Voldemort
+        if remaining_horcruxes == 0:
+            prev = state['prev_move']
+            if not dfs(self.map, wizards['Harry Potter'][0],[prev]):
+                cost += 30
+            if wizards['Harry Potter'][0] == prev:
+                cost += 30
+            cost += manhattan_distance(wizards['Harry Potter'][0], self.voldemort_loc)
+        else:
+            cost += 50
         return cost
 
-        # IDEAS:   1. distance from harry to voldemort + #horcruxes
-        #          2. distance from harry to voldemort + min_distance from the wizards to the horcruxes
 
 
 
