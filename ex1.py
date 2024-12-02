@@ -65,13 +65,15 @@ class HarryPotterProblem(search.Problem):
         new_state = json.loads(state)
         wizards = new_state['wizards']
         horcruxes = new_state['horcruxes']
-
-        def get_move_actions(loc, wiz_name):
+        death_eaters = new_state['death_eaters']
+        # cur_move = new_state['move_num'] + 1
+        def get_move_actions(loc, wiz_name, curr_move):
             move_actions = []
             for offset in [(0, 1), (0, -1), (1, 0), (-1, 0)]:
                 new_loc = (loc[0] + offset[0], loc[1] + offset[1])
                 if 0 <= new_loc[0] < len(self.map) and 0 <= new_loc[1] < len(self.map[0])\
                     and self.map[new_loc[0]][new_loc[1]] != 'I':
+                    # if True not in [de[curr_move % len(de)] == new_loc for de in death_eaters.values()]:
                     move_actions.append(('move', wiz_name, new_loc))
             return tuple(move_actions)
 
@@ -82,7 +84,9 @@ class HarryPotterProblem(search.Problem):
                     destroy_actions.append(('destroy', wiz_name, horcrux))
             return tuple(destroy_actions)
 
-        def get_wait_actions(wiz_name):
+        def get_wait_actions(wiz_name, loc, curr_move):
+            # if True in [de[curr_move % len(de)] == loc for de in death_eaters.values()]:
+            #     return ()
             return tuple([('wait', wiz_name)])
 
         def get_kill_voldemort_action(loc, wiz_name):
@@ -96,9 +100,12 @@ class HarryPotterProblem(search.Problem):
 
         actions = []
         for wizard in wizards:
-            actions.append(get_move_actions(wizards[wizard][0], wizard) + get_destroy_horcrux_actions(wizards[wizard][0], wizard)\
-                         + get_wait_actions(wizard) + get_kill_voldemort_action(wizards[wizard][0], wizard))
+            actions.append(get_move_actions(wizards[wizard][0], wizard, new_state['move_num']+1) + get_destroy_horcrux_actions(wizards[wizard][0], wizard)\
+                          + get_wait_actions(wizard, wizards[wizard][0], new_state['move_num']+1) + get_kill_voldemort_action(wizards[wizard][0], wizard))
         actions = tuple(itertools.product(*actions))
+        for wizard in wizards:
+            if wizards[wizard][1] == 0:
+                print('YOU LOST THIS GAME :(')
         return actions
 
     def result(self, state, action):

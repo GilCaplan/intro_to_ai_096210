@@ -1,7 +1,7 @@
 import ex1
 import search
 import time
-from problems import non_comp_problems
+from problems import non_comp_problems, comp_problems
 from problemsT import t_problems
 
 def timeout_exec(func, args=(), kwargs={}, timeout_duration=10, default=None):
@@ -73,9 +73,14 @@ def solve_problems(problems):
 def main():
     print(ex1.ids)
     """Here goes the input you want to check"""
+    print("solving Non Complex Problems:")
+    solve_problems(non_comp_problems)
 
-    # solve_problems(non_comp_problems)
-    solve_problems(t_problems)
+    # print("solving Complex Problems:")
+    # solve_problems(comp_problems)
+    # print("finsihed solving Non Complex Problems:")
+    # solve_problems(t_problems)
+    return
 
 
 if __name__ == '__main__':
