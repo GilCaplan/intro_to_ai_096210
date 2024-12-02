@@ -41,14 +41,14 @@ class HarryPotterProblem(search.Problem):
                 death_eater_paths[de] = compute_path(death_eaters[de])
             return death_eater_paths
         self.map = initial['map']
-        self.voldemort_killed = False
         initial_state = {
             'wizards': initial['wizards'],
             'death_eaters': update_death_eaters_path(initial['death_eaters']),
             'horcruxes': {str(f"h{i}"): [hor, False] for i, hor in enumerate(initial['horcruxes'])},
             'prev_move': (0, 0),
             'move_num': 0,
-            'horcruxes_destroyed': sys.maxsize
+            'horcruxes_destroyed': sys.maxsize,
+            'voldemort_killed' : False
         }
         self.voldemort_loc = (0, 0)
         for i in range(len(self.map)):
@@ -90,7 +90,8 @@ class HarryPotterProblem(search.Problem):
             all_horcruxes_destroyed = all(horcrux[1] for horcrux in horcruxes.values())
 
             if wiz_name == 'Harry Potter' and self.map[loc[0]][loc[1]] == 'V' and all_horcruxes_destroyed:
-                return tuple([('kill', wiz_name)])
+                if new_state['move_num'] > new_state['horcruxes_destroyed']:
+                    return tuple([('kill', wiz_name)])
             return ()
 
         actions = []
@@ -104,6 +105,7 @@ class HarryPotterProblem(search.Problem):
         """Return the state that results from executing the given action in the given state."""
         new_state = deepcopy(json.loads(state))
         wizards = new_state['wizards']
+        horcruxes = new_state['horcruxes']
         new_state['move_num'] = new_state['move_num'] + 1
         # new_state['prev_move'] = state['wizards']['Harry Potter'][0]
         for atomic_action in action:
@@ -119,9 +121,11 @@ class HarryPotterProblem(search.Problem):
 
             elif action_name == 'destroy':
                 new_state['horcruxes'][atomic_action[2]][1] = True
+                if sum(1 for horcrux in horcruxes.values() if not horcrux[1]) == 0:
+                    new_state['horcruxes_destroyed'] = new_state['move_num']
 
             elif action_name == 'kill':
-                self.voldemort_killed = True
+                new_state['voldemort_killed'] = True
 
             for de in new_state['death_eaters']:
                 curr_loc = new_state['move_num'] % len(new_state['death_eaters'][de])
@@ -133,7 +137,7 @@ class HarryPotterProblem(search.Problem):
 
     def goal_test(self, state):
         """Return True if the state is a goal state."""
-        return self.voldemort_killed
+        return json.loads(state)['voldemort_killed']
 
 
     def h(self, node):
@@ -165,11 +169,10 @@ class HarryPotterProblem(search.Problem):
         else:
             new_state['horcruxes_destroyed'] = min([new_state['move_num'], new_state['horcruxes_destroyed']])
             x, y = new_state['wizards']['Harry Potter'][0]
-            if new_state['move_num'] > new_state['horcruxes_destroyed']:
-                cost += self.shortest_dist_from_voldemort[x][y]
-                if manhattan_distance(wizards['Harry Potter'][0], self.voldemort_loc) > 0:
-                    # it costs one turn to kill voldermort
-                    cost += 1
+            cost += self.shortest_dist_from_voldemort[x][y]
+            if manhattan_distance(wizards['Harry Potter'][0], self.voldemort_loc) > 0:
+                # it costs one turn to kill voldermort
+                cost += 1 if new_state['voldemort_killed'] else 0
         return cost
 
 
