@@ -62,9 +62,9 @@ class HarryPotterProblem(search.Problem):
 
     def actions(self, state):
         """Return the valid actions that can be executed in the given state."""
-        state = json.loads(state)
-        wizards = state['wizards']
-        horcruxes = state['horcruxes']
+        new_state = json.loads(state)
+        wizards = new_state['wizards']
+        horcruxes = new_state['horcruxes']
 
         def get_move_actions(loc, wiz_name):
             move_actions = []
@@ -100,11 +100,10 @@ class HarryPotterProblem(search.Problem):
 
     def result(self, state, action):
         """Return the state that results from executing the given action in the given state."""
-        state = json.loads(state)
-        new_state = deepcopy(state)
+        new_state = deepcopy(json.loads(state))
         wizards = new_state['wizards']
         self.move_num += 1
-        new_state['prev_move'] = state['wizards']['Harry Potter'][0]
+        # new_state['prev_move'] = state['wizards']['Harry Potter'][0]
         for atomic_action in action:
             action_name = atomic_action[0]
             wiz_name = atomic_action[1]
@@ -143,16 +142,16 @@ class HarryPotterProblem(search.Problem):
         def manhattan_distance(loc1, loc2):
             return abs(loc1[0] - loc2[0]) + abs(loc1[1] - loc2[1])
         cost = 0
-        state = json.loads(node.state)
-        wizards = state['wizards']
-        death_eater_paths = state['death_eaters']
-        horcruxes = state['horcruxes']
+        new_state = json.loads(node.state)
+        wizards = new_state['wizards']
+        death_eater_paths = new_state['death_eaters']
+        horcruxes = new_state['horcruxes']
 
         # deal with destroying hocruxes
         remaining_horcruxes = sum(1 for horcrux in horcruxes.values() if not horcrux[1])
         horcrux_dist = 0
         if remaining_horcruxes > 0:
-            for wizard in wizards.keys():
+            for wizard in wizards.keys():# fix manhattan to bfs distance?
                 horcrux_dist += min(manhattan_distance(wizards[wizard][0], coord)\
                              for coord, _ in horcruxes.values())
             cost += remaining_horcruxes + horcrux_dist
@@ -161,22 +160,16 @@ class HarryPotterProblem(search.Problem):
         #ToDo implement Harry searching for Voldemort
         #ToDo calculate shortest path to finding Voldermort
         # pre compute nodes distance from voldermort using BFS to get shortest paths tree
-        if remaining_horcruxes == 0:
-            self.all_horcrux_destroyed_turn = min([self.move_num, self.all_horcrux_destroyed_turn])
-            if self.move_num > self.all_horcrux_destroyed_turn:
-                # prev = state['prev_move']
-                pass
-                x, y = state['wizards']['Harry Potter'][0]
-                cost += self.shortest_dist_from_voldemort[x][y]
-
-                # cost += manhattan_distance(wizards['Harry Potter'][0], self.voldemort_loc)
         else:
-            # every horocrux is 50 points so the h is monotonically decreasing
-            cost += 50 * remaining_horcruxes
+            self.all_horcrux_destroyed_turn = min([self.move_num, self.all_horcrux_destroyed_turn])
+            x, y = new_state['wizards']['Harry Potter'][0]
+            if self.move_num > self.all_horcrux_destroyed_turn or (tuple((x, y)) == tuple(self.voldemort_loc)):
+                # prev = state['prev_move']
+                cost += self.shortest_dist_from_voldemort[x][y]
+                if manhattan_distance(wizards['Harry Potter'][0], self.voldemort_loc) > 0:
+                    # ensure that if harry is on the V tile, he kills voldermort
+                    cost += 1
         return cost
-
-
-
 
 def create_harrypotter_problem(game):
     return HarryPotterProblem(game)
