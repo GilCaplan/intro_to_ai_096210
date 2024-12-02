@@ -41,14 +41,14 @@ class HarryPotterProblem(search.Problem):
                 death_eater_paths[de] = compute_path(death_eaters[de])
             return death_eater_paths
         self.map = initial['map']
-        self.move_num = 0
-        self.all_horcrux_destroyed_turn = sys.maxsize
         self.voldemort_killed = False
         initial_state = {
             'wizards': initial['wizards'],
             'death_eaters': update_death_eaters_path(initial['death_eaters']),
             'horcruxes': {str(f"h{i}"): [hor, False] for i, hor in enumerate(initial['horcruxes'])},
-            'prev_move': (0, 0)
+            'prev_move': (0, 0),
+            'move_num': 0,
+            'horcruxes_destroyed': sys.maxsize
         }
         self.voldemort_loc = (0, 0)
         for i in range(len(self.map)):
@@ -86,8 +86,10 @@ class HarryPotterProblem(search.Problem):
             return tuple([('wait', wiz_name)])
 
         def get_kill_voldemort_action(loc, wiz_name):
-            if wiz_name == 'Harry Potter' and self.map[loc[0]][loc[1]] == 'V' and len(horcruxes) == 0:
-                 #TODO: maybe check if theres been at least one turn since the last horcrux has been destroyed
+            # Check if all horcruxes are destroyed
+            all_horcruxes_destroyed = all(horcrux[1] for horcrux in horcruxes.values())
+
+            if wiz_name == 'Harry Potter' and self.map[loc[0]][loc[1]] == 'V' and all_horcruxes_destroyed:
                 return tuple([('kill', wiz_name)])
             return ()
 
@@ -102,7 +104,7 @@ class HarryPotterProblem(search.Problem):
         """Return the state that results from executing the given action in the given state."""
         new_state = deepcopy(json.loads(state))
         wizards = new_state['wizards']
-        self.move_num += 1
+        new_state['move_num'] = new_state['move_num'] + 1
         # new_state['prev_move'] = state['wizards']['Harry Potter'][0]
         for atomic_action in action:
             action_name = atomic_action[0]
@@ -122,7 +124,7 @@ class HarryPotterProblem(search.Problem):
                 self.voldemort_killed = True
 
             for de in new_state['death_eaters']:
-                curr_loc = self.move_num % len(new_state['death_eaters'][de])
+                curr_loc = new_state['move_num'] % len(new_state['death_eaters'][de])
                 if tuple(new_state['death_eaters'][de][curr_loc]) == tuple(new_loc):
                     new_state['wizards'][wiz_name] = (new_loc, wizards[wiz_name][1] - 1)
 
@@ -161,50 +163,15 @@ class HarryPotterProblem(search.Problem):
         # Harry searching for Voldemort
         # using pre computed distances from voldermort using BFS
         else:
-            self.all_horcrux_destroyed_turn = min([self.move_num, self.all_horcrux_destroyed_turn])
+            new_state['horcruxes_destroyed'] = min([new_state['move_num'], new_state['horcruxes_destroyed']])
             x, y = new_state['wizards']['Harry Potter'][0]
-            if self.move_num > self.all_horcrux_destroyed_turn or (tuple((x, y)) == tuple(self.voldemort_loc)):
-                # prev = state['prev_move']
+            if new_state['move_num'] > new_state['horcruxes_destroyed']:
                 cost += self.shortest_dist_from_voldemort[x][y]
                 if manhattan_distance(wizards['Harry Potter'][0], self.voldemort_loc) > 0:
-                    # ensure that if harry is on the V tile, he kills voldermort
+                    # it costs one turn to kill voldermort
                     cost += 1
         return cost
 
-    def h_check(self, state):
-        """
-        Heuristic function for A* search.
-        Estimates the minimum number of moves needed to reach the goal.
-        """
-        def manhattan_distance(loc1, loc2):
-            return abs(loc1[0] - loc2[0]) + abs(loc1[1] - loc2[1])
-        cost = 0
-        new_state = json.loads(state)
-        wizards = new_state['wizards']
-        death_eater_paths = new_state['death_eaters']
-        horcruxes = new_state['horcruxes']
-
-        # deal with destroying hocruxes
-        remaining_horcruxes = sum(1 for horcrux in horcruxes.values() if not horcrux[1])
-        horcrux_dist = 0
-        if remaining_horcruxes > 0:
-            cost += max([self.shortest_dist_from_voldemort[x][y] for [(x,y), _] in horcruxes.values()])
-            for wizard in wizards.keys():
-                horcrux_dist += min(manhattan_distance(wizards[wizard][0], coord)\
-                             for coord, _ in horcruxes.values())
-            cost += remaining_horcruxes + horcrux_dist # cost of reaching & destroying Horcruxes
-        #ToDo implement avoid deatheaters
-
-        # Harry searching for Voldemort
-        # using pre computed distances from voldermort using BFS
-        else:
-            self.all_horcrux_destroyed_turn = min([self.move_num, self.all_horcrux_destroyed_turn])
-            x, y = new_state['wizards']['Harry Potter'][0]
-            if self.move_num > self.all_horcrux_destroyed_turn:
-                cost += self.shortest_dist_from_voldemort[x][y]
-                if manhattan_distance(wizards['Harry Potter'][0], self.voldemort_loc) > 0:
-                    cost += 1 # it cost one move to kill Voldermort
-        return cost
 
 def create_harrypotter_problem(game):
     return HarryPotterProblem(game)
