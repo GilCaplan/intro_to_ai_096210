@@ -2,7 +2,7 @@ import ex1
 import search
 import time
 from problems import non_comp_problems, comp_problems
-from problemsT import t_problems
+from problemsT import t_problems, t_hard_problems
 
 def timeout_exec(func, args=(), kwargs={}, timeout_duration=10, default=None):
     """This function will spawn a thread and run the given function
@@ -76,12 +76,13 @@ def solve_problems(problems):
 def main():
     print(ex1.ids)
     """Here goes the input you want to check"""
-    print("Solving Non Complex Problems:")
-    solve_problems(non_comp_problems)
+    # print("Solving Non Complex Problems:")
+    # solve_problems(non_comp_problems)
     print("Solving Complex Problems:")
     solve_problems(comp_problems)
+    print("done")
     print("Solving Tal Problems:")
-    solve_problems(t_problems)
+    # solve_problems(t_hard_problems)
     return
 
 
