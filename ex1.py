@@ -135,7 +135,6 @@ class HarryPotterProblem(search.Problem):
                     new_state['wizards'][wiz_name] = (new_loc, wizards[wiz_name][1] - 1)
         return json.dumps(new_state)
 
-
     def goal_test(self, state):
         """Return True if the state is a goal state."""
         return json.loads(state)['voldemort_killed']
@@ -152,7 +151,7 @@ class HarryPotterProblem(search.Problem):
         wizards = new_state['wizards']
         horcruxes = new_state['horcruxes']
         # adding to score if wizard dies since it's GAME OVER in this case
-        cost = sum(60 for wiz in wizards if wizards[wiz][1] <= 0)
+        cost = sum(100 for wiz in wizards if wizards[wiz][1] <= 0)
 
         # deal with destroying horcruxes
         remaining_horcruxes = sum(1 for horcrux in horcruxes.values() if not horcrux[1])

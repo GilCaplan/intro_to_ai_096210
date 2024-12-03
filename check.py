@@ -67,7 +67,7 @@ def solve_problems(problems):
         result = check_problem(
             p, (lambda p: search.astar_search(p, p.h)), timeout)
         print(f"{result[0]} {result[1]}")
-        cnt+=1
+        cnt += 1
         if result[2] != None:
             if result[0] != -3:
                 solved = solved + 1
@@ -76,8 +76,8 @@ def solve_problems(problems):
 def main():
     print(ex1.ids)
     """Here goes the input you want to check"""
-    # print("Solving Non Complex Problems:")
-    # solve_problems(non_comp_problems)
+    print("Solving Non Complex Problems:")
+    solve_problems(non_comp_problems)
     print("Solving Complex Problems:")
     solve_problems(comp_problems)
     print("done")
