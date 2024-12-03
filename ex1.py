@@ -8,9 +8,8 @@ import search
 
 ids = ["111111111", "111111111"]
 
-
+# if have time use memoize and bfs from hocrox and use instead of manhatten
 class HarryPotterProblem(search.Problem):
-
     def __init__(self, initial):
         def bfs(map, start):
             rows, cols = len(map), len(map[0])
@@ -42,19 +41,16 @@ class HarryPotterProblem(search.Problem):
                 death_eater_paths[de] = compute_path(death_eaters[de])
             return death_eater_paths
         self.map = initial['map']
+        self.death_eaters = update_death_eaters_path(initial['death_eaters'])
         initial_state = {
             'wizards': initial['wizards'],
-            'death_eaters': update_death_eaters_path(initial['death_eaters']),
             'horcruxes': {str(f"{i}"): [hor, False] for i, hor in enumerate(initial['horcruxes'])},
             'move_num': 0,
             'horcruxes_destroyed': sys.maxsize,
             'voldemort_killed': False,
-            'Game Lost': False
         }
         self.voldemort_loc = next(
-            ((i, j) for i, row in enumerate(self.map) for j, tile in enumerate(row) if tile == 'V'),
-            None
-        )
+            ((i, j) for i, row in enumerate(self.map) for j, tile in enumerate(row) if tile == 'V'),None)
 
         self.shortest_dist_from_voldemort = bfs(self.map, self.voldemort_loc)
         initial_state = json.dumps(initial_state)
@@ -133,9 +129,9 @@ class HarryPotterProblem(search.Problem):
             elif action_name == 'kill':
                 new_state['voldemort_killed'] = True
 
-            for de in new_state['death_eaters']:
-                curr_loc = new_state['move_num'] % len(new_state['death_eaters'][de])
-                if tuple(new_state['death_eaters'][de][curr_loc]) == tuple(new_loc):
+            for de in self.death_eaters.keys():
+                curr_loc = new_state['move_num'] % len(self.death_eaters[de])
+                if tuple(self.death_eaters[de][curr_loc]) == tuple(new_loc):
                     new_state['wizards'][wiz_name] = (new_loc, wizards[wiz_name][1] - 1)
         return json.dumps(new_state)
 
@@ -149,13 +145,15 @@ class HarryPotterProblem(search.Problem):
         Heuristic function for A* search.
         Estimates the minimum number of moves needed to reach the goal.
         """
+
+        # IDEAS- add points if life lost (might make not admissible need to check)
         def manhattan_distance(loc1, loc2):
             return abs(loc1[0] - loc2[0]) + abs(loc1[1] - loc2[1])
         new_state = json.loads(node.state)
         wizards = new_state['wizards']
         horcruxes = new_state['horcruxes']
         # adding to score if wizard dies since it's GAME OVER in this case
-        cost = sum(100 for wiz in wizards if wizards[wiz][1] <= 0)
+        cost = any(100 for wiz in wizards if wizards[wiz][1] <= 0)
 
         # deal with destroying horcruxes
         remaining_horcruxes = sum(1 for horcrux in horcruxes.values() if not horcrux[1])
