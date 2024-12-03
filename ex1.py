@@ -72,7 +72,11 @@ class HarryPotterProblem(search.Problem):
                 new_loc = (loc[0] + offset[0], loc[1] + offset[1])
                 if 0 <= new_loc[0] < len(self.map) and 0 <= new_loc[1] < len(self.map[0])\
                     and self.map[new_loc[0]][new_loc[1]] != 'I':
-                    # check that wizards don't encounter voldermort
+                    if self.map[new_loc[0]][new_loc[1]] == 'V':
+                        if wiz_name != 'Harry Potter':
+                            continue
+                        if wiz_name == 'Harry Potter' and not all(horcrux[1] for horcrux in horcruxes.values()):
+                            continue
                     # if True not in [de[curr_move % len(de)] == new_loc for de in death_eaters.values()]:
                     move_actions.append(('move', wiz_name, new_loc))
             return tuple(move_actions)
