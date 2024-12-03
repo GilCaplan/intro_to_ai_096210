@@ -46,18 +46,16 @@ class HarryPotterProblem(search.Problem):
             'wizards': initial['wizards'],
             'death_eaters': update_death_eaters_path(initial['death_eaters']),
             'horcruxes': {str(f"{i}"): [hor, False] for i, hor in enumerate(initial['horcruxes'])},
-            'prev_move': (0, 0),
             'move_num': 0,
             'horcruxes_destroyed': sys.maxsize,
-            'voldemort_killed' : False,
+            'voldemort_killed': False,
             'Game Lost': False
         }
-        self.voldemort_loc = (0, 0)
-        for i in range(len(self.map)):
-            for j in range(len(self.map[0])):
-                if self.map[i][j] == 'V':
-                    self.voldemort_loc = (i, j)
-                    break
+        self.voldemort_loc = next(
+            ((i, j) for i, row in enumerate(self.map) for j, tile in enumerate(row) if tile == 'V'),
+            None
+        )
+
         self.shortest_dist_from_voldemort = bfs(self.map, self.voldemort_loc)
         initial_state = json.dumps(initial_state)
         search.Problem.__init__(self, initial_state)
@@ -67,14 +65,14 @@ class HarryPotterProblem(search.Problem):
         new_state = json.loads(state)
         wizards = new_state['wizards']
         horcruxes = new_state['horcruxes']
-        death_eaters = new_state['death_eaters']
-        # cur_move = new_state['move_num'] + 1
-        def get_move_actions(loc, wiz_name, curr_move):
+
+        def get_move_actions(loc, wiz_name):
             move_actions = []
             for offset in [(0, 1), (0, -1), (1, 0), (-1, 0)]:
                 new_loc = (loc[0] + offset[0], loc[1] + offset[1])
                 if 0 <= new_loc[0] < len(self.map) and 0 <= new_loc[1] < len(self.map[0])\
                     and self.map[new_loc[0]][new_loc[1]] != 'I':
+                    # check that wizards don't encounter voldermort
                     # if True not in [de[curr_move % len(de)] == new_loc for de in death_eaters.values()]:
                     move_actions.append(('move', wiz_name, new_loc))
             return tuple(move_actions)
@@ -86,9 +84,7 @@ class HarryPotterProblem(search.Problem):
                     destroy_actions.append(('destroy', wiz_name, horcrux))
             return tuple(destroy_actions)
 
-        def get_wait_actions(wiz_name, loc, curr_move):
-            # if True in [de[curr_move % len(de)] == loc for de in death_eaters.values()]:
-            #     return ()
+        def get_wait_actions(wiz_name):
             return tuple([('wait', wiz_name)])
 
         def get_kill_voldemort_action(loc, wiz_name):
@@ -102,8 +98,8 @@ class HarryPotterProblem(search.Problem):
 
         actions = []
         for wizard in wizards:
-            actions.append(get_move_actions(wizards[wizard][0], wizard, new_state['move_num']+1) + get_destroy_horcrux_actions(wizards[wizard][0], wizard)\
-                          + get_wait_actions(wizard, wizards[wizard][0], new_state['move_num']+1) + get_kill_voldemort_action(wizards[wizard][0], wizard))
+            actions.append(get_move_actions(wizards[wizard][0], wizard,) + get_destroy_horcrux_actions(wizards[wizard][0], wizard)\
+                          + get_wait_actions(wizard) + get_kill_voldemort_action(wizards[wizard][0], wizard))
         actions = tuple(itertools.product(*actions))
         return actions
 
@@ -137,10 +133,6 @@ class HarryPotterProblem(search.Problem):
                 curr_loc = new_state['move_num'] % len(new_state['death_eaters'][de])
                 if tuple(new_state['death_eaters'][de][curr_loc]) == tuple(new_loc):
                     new_state['wizards'][wiz_name] = (new_loc, wizards[wiz_name][1] - 1)
-
-            # for wiz_name in wizards:
-            #     if wizards[wiz_name][1] == 0:
-            #         new_state['Game Lost'] = True
         return json.dumps(new_state)
 
 
@@ -159,33 +151,29 @@ class HarryPotterProblem(search.Problem):
         """
         def manhattan_distance(loc1, loc2):
             return abs(loc1[0] - loc2[0]) + abs(loc1[1] - loc2[1])
-        cost = 0
         new_state = json.loads(node.state)
         wizards = new_state['wizards']
-        # death_eater_paths = new_state['death_eaters']
         horcruxes = new_state['horcruxes']
         # adding to score if wizard dies since it's GAME OVER in this case
-        for wiz in wizards:
-            if wizards[wiz][1] <= 0:
-                cost += 60
+        cost = sum(60 for wiz in wizards if wizards[wiz][1] <= 0)
+
         # deal with destroying hocruxes
         remaining_horcruxes = sum(1 for horcrux in horcruxes.values() if not horcrux[1])
         horcrux_dist = 0
         if remaining_horcruxes > 0:
             cost += max([self.shortest_dist_from_voldemort[x][y] for [(x,y), _] in horcruxes.values()])
-            for wizard in wizards.keys():# fix manhattan to bfs distance?
+            for wizard in wizards.keys():
                 horcrux_dist += min(manhattan_distance(wizards[wizard][0], coord)\
-                             for coord, _ in horcruxes.values())
+                                            for coord, _ in horcruxes.values())
             cost += remaining_horcruxes + horcrux_dist
 
         # Harry searching for Voldemort
-        # using pre-computed distances from voldermort using BFS
+        # using pre-computed distances from voldermort through BFS
         else:
             new_state['horcruxes_destroyed'] = min([new_state['move_num'], new_state['horcruxes_destroyed']])
             x, y = new_state['wizards']['Harry Potter'][0]
             cost += self.shortest_dist_from_voldemort[x][y]
             if manhattan_distance(wizards['Harry Potter'][0], self.voldemort_loc) > 0:
-                # it costs one turn to kill voldermort
                 cost += 1 if new_state['voldemort_killed'] else 0
         return cost
 
