@@ -109,6 +109,7 @@ class HarryPotterProblem(search.Problem):
 
     def result(self, state, action):
         """Return the state that results from executing the given action in the given state."""
+        # try avoid moves where wizard dies from death eater?
         new_state = deepcopy(json.loads(state))
         wizards = new_state['wizards']
         horcruxes = new_state['horcruxes']
@@ -137,11 +138,9 @@ class HarryPotterProblem(search.Problem):
                 if tuple(new_state['death_eaters'][de][curr_loc]) == tuple(new_loc):
                     new_state['wizards'][wiz_name] = (new_loc, wizards[wiz_name][1] - 1)
 
-        # if not new_state['Game Lost']:
-        #     for wizard in wizards:
-        #         if wizards[wizard][1] <= 0 and not new_state['Game Lost']:
-        #             print('YOU LOST THIS GAME :(')
-        #             new_state['Game Lost'] = True
+            for wiz_name in wizards:
+                if wizards[wiz_name][1] == 0:
+                    new_state['Game Lost'] = True
         return json.dumps(new_state)
 
 
@@ -163,11 +162,12 @@ class HarryPotterProblem(search.Problem):
         cost = 0
         new_state = json.loads(node.state)
         wizards = new_state['wizards']
-        death_eater_paths = new_state['death_eaters']
+        # death_eater_paths = new_state['death_eaters']
         horcruxes = new_state['horcruxes']
-        # for wiz in wizards:
-        #     if wizards[wiz][1] <= 0:
-        #         cost += 60
+        # adding to score if wizard dies since it's GAME OVER in this case
+        for wiz in wizards:
+            if wizards[wiz][1] <= 0:
+                cost += 60
         # deal with destroying hocruxes
         remaining_horcruxes = sum(1 for horcrux in horcruxes.values() if not horcrux[1])
         horcrux_dist = 0
@@ -177,10 +177,9 @@ class HarryPotterProblem(search.Problem):
                 horcrux_dist += min(manhattan_distance(wizards[wizard][0], coord)\
                              for coord, _ in horcruxes.values())
             cost += remaining_horcruxes + horcrux_dist
-        #ToDo implement avoid deatheaters
 
         # Harry searching for Voldemort
-        # using pre computed distances from voldermort using BFS
+        # using pre-computed distances from voldermort using BFS
         else:
             new_state['horcruxes_destroyed'] = min([new_state['move_num'], new_state['horcruxes_destroyed']])
             x, y = new_state['wizards']['Harry Potter'][0]
