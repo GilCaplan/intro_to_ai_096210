@@ -1,7 +1,6 @@
 import itertools
 import json
 import sys
-from copy import deepcopy
 from collections import deque
 
 import search
@@ -25,10 +24,10 @@ class HarryPotterProblem(search.Problem):
 
                 for dx, dy in directions:
                     nx, ny = x + dx, y + dy
-                    if 0 <= nx < rows and 0 <= ny < cols and map[nx][ny] != 'I' and distances[nx][ny] == float('inf'):
+                    if 0 <= nx < rows and 0 <= ny < cols and distances[nx][ny] == float('inf') \
+                                                            and map[nx][ny] != 'I':
                         distances[nx][ny] = current_dist + 1
                         queue.append((nx, ny))
-
             return distances
 
         def update_death_eaters_path(death_eaters):
@@ -44,13 +43,13 @@ class HarryPotterProblem(search.Problem):
         self.death_eaters = update_death_eaters_path(initial['death_eaters'])
         initial_state = {
             'wizards': initial['wizards'],
-            'horcruxes': {str(f"{i}"): [hor, False] for i, hor in enumerate(initial['horcruxes'])},
+            'horcruxes': {i: [hor, False] for i, hor in enumerate(initial['horcruxes'])},
             'move_num': 0,
             'horcruxes_destroyed': sys.maxsize,
             'voldemort_killed': False,
         }
         self.voldemort_loc = next(
-            ((i, j) for i, row in enumerate(self.map) for j, tile in enumerate(row) if tile == 'V'),None)
+            ((i, j) for i, row in enumerate(self.map) for j, tile in enumerate(row) if tile == 'V'), None)
 
         self.shortest_dist_from_voldemort = bfs(self.map, self.voldemort_loc)
         initial_state = json.dumps(initial_state)
@@ -73,7 +72,6 @@ class HarryPotterProblem(search.Problem):
                             continue
                         if wiz_name == 'Harry Potter' and not all(horcrux[1] for horcrux in horcruxes.values()):
                             continue
-                    # if True not in [de[curr_move % len(de)] == new_loc for de in death_eaters.values()]:
                     move_actions.append(('move', wiz_name, new_loc))
             return tuple(move_actions)
 
@@ -106,7 +104,7 @@ class HarryPotterProblem(search.Problem):
     def result(self, state, action):
         """Return the state that results from executing the given action in the given state."""
         # try avoid moves where wizard dies from death eater?
-        new_state = deepcopy(json.loads(state))
+        new_state = json.loads(state)
         wizards = new_state['wizards']
         horcruxes = new_state['horcruxes']
         new_state['move_num'] = new_state['move_num'] + 1
