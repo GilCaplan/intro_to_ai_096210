@@ -43,6 +43,7 @@ def check_problem(p, search_method, timeout):
     s = timeout_exec(search_method, args=[p], timeout_duration=timeout)
     t2 = time.time()
 
+
     if isinstance(s, search.Node):
         solve = s
         solution = list(map(lambda n: n.action, solve.path()))[1:]
@@ -55,6 +56,7 @@ def check_problem(p, search_method, timeout):
 
 def solve_problems(problems):
     solved = 0
+    cnt = 0
     for problem in problems:
         try:
             p = ex1.create_harrypotter_problem(problem)
@@ -64,7 +66,8 @@ def solve_problems(problems):
         timeout = 60
         result = check_problem(
             p, (lambda p: search.astar_search(p, p.h)), timeout)
-        print("A* ", result)
+        print(f"board #{cnt}, solved #{solved} boards, result: {result[:2]}")
+        cnt+=1
         if result[2] != None:
             if result[0] != -3:
                 solved = solved + 1
@@ -73,12 +76,11 @@ def solve_problems(problems):
 def main():
     print(ex1.ids)
     """Here goes the input you want to check"""
-    print("solving Non Complex Problems:")
+    print("Solving Non Complex Problems:")
     solve_problems(non_comp_problems)
-
-    print("solving Complex Problems:")
+    print("Solving Complex Problems:")
     solve_problems(comp_problems)
-    print("finished solving Non Complex Problems:")
+    print("Solving Tal Problems:")
     solve_problems(t_problems)
     return
 

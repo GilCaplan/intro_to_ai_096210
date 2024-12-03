@@ -138,9 +138,9 @@ class HarryPotterProblem(search.Problem):
                 if tuple(new_state['death_eaters'][de][curr_loc]) == tuple(new_loc):
                     new_state['wizards'][wiz_name] = (new_loc, wizards[wiz_name][1] - 1)
 
-            for wiz_name in wizards:
-                if wizards[wiz_name][1] == 0:
-                    new_state['Game Lost'] = True
+            # for wiz_name in wizards:
+            #     if wizards[wiz_name][1] == 0:
+            #         new_state['Game Lost'] = True
         return json.dumps(new_state)
 
 
