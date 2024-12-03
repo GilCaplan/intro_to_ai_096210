@@ -73,13 +73,13 @@ def solve_problems(problems):
 def main():
     print(ex1.ids)
     """Here goes the input you want to check"""
-    print("solving Non Complex Problems:")
-    solve_problems(non_comp_problems)
-
+    # print("solving Non Complex Problems:")
+    # solve_problems(non_comp_problems)
+    #
     # print("solving Complex Problems:")
     # solve_problems(comp_problems)
     # print("finsihed solving Non Complex Problems:")
-    # solve_problems(t_problems)
+    solve_problems(t_problems)
     return
 
 

@@ -31,6 +31,7 @@ class HarryPotterProblem(search.Problem):
                         queue.append((nx, ny))
 
             return distances
+
         def update_death_eaters_path(death_eaters):
             def compute_path(death_eater):
                 path = death_eater + list(reversed(death_eater[1:len(death_eater) - 1]))
@@ -48,7 +49,8 @@ class HarryPotterProblem(search.Problem):
             'prev_move': (0, 0),
             'move_num': 0,
             'horcruxes_destroyed': sys.maxsize,
-            'voldemort_killed' : False
+            'voldemort_killed' : False,
+            'Game Lost': False
         }
         self.voldemort_loc = (0, 0)
         for i in range(len(self.map)):
@@ -103,9 +105,6 @@ class HarryPotterProblem(search.Problem):
             actions.append(get_move_actions(wizards[wizard][0], wizard, new_state['move_num']+1) + get_destroy_horcrux_actions(wizards[wizard][0], wizard)\
                           + get_wait_actions(wizard, wizards[wizard][0], new_state['move_num']+1) + get_kill_voldemort_action(wizards[wizard][0], wizard))
         actions = tuple(itertools.product(*actions))
-        for wizard in wizards:
-            if wizards[wizard][1] == 0:
-                print('YOU LOST THIS GAME :(')
         return actions
 
     def result(self, state, action):
@@ -114,7 +113,6 @@ class HarryPotterProblem(search.Problem):
         wizards = new_state['wizards']
         horcruxes = new_state['horcruxes']
         new_state['move_num'] = new_state['move_num'] + 1
-        # new_state['prev_move'] = state['wizards']['Harry Potter'][0]
         for atomic_action in action:
             action_name = atomic_action[0]
             wiz_name = atomic_action[1]
@@ -139,12 +137,20 @@ class HarryPotterProblem(search.Problem):
                 if tuple(new_state['death_eaters'][de][curr_loc]) == tuple(new_loc):
                     new_state['wizards'][wiz_name] = (new_loc, wizards[wiz_name][1] - 1)
 
+        # if not new_state['Game Lost']:
+        #     for wizard in wizards:
+        #         if wizards[wizard][1] <= 0 and not new_state['Game Lost']:
+        #             print('YOU LOST THIS GAME :(')
+        #             new_state['Game Lost'] = True
         return json.dumps(new_state)
 
 
     def goal_test(self, state):
         """Return True if the state is a goal state."""
-        return json.loads(state)['voldemort_killed']
+        check_state = json.loads(state)
+        if check_state['voldemort_killed'] and check_state['Game Lost']:
+            print("YOU LOST :(")
+        return check_state['voldemort_killed']
 
 
     def h(self, node):
@@ -159,7 +165,9 @@ class HarryPotterProblem(search.Problem):
         wizards = new_state['wizards']
         death_eater_paths = new_state['death_eaters']
         horcruxes = new_state['horcruxes']
-
+        for wiz in wizards:
+            if wizards[wiz][1] <= 0:
+                cost += 60
         # deal with destroying hocruxes
         remaining_horcruxes = sum(1 for horcrux in horcruxes.values() if not horcrux[1])
         horcrux_dist = 0
