@@ -45,7 +45,7 @@ class HarryPotterProblem(search.Problem):
         initial_state = {
             'wizards': initial['wizards'],
             'death_eaters': update_death_eaters_path(initial['death_eaters']),
-            'horcruxes': {str(f"h{i}"): [hor, False] for i, hor in enumerate(initial['horcruxes'])},
+            'horcruxes': {str(f"{i}"): [hor, False] for i, hor in enumerate(initial['horcruxes'])},
             'prev_move': (0, 0),
             'move_num': 0,
             'horcruxes_destroyed': sys.maxsize,

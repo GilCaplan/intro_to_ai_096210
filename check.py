@@ -66,7 +66,7 @@ def solve_problems(problems):
         timeout = 60
         result = check_problem(
             p, (lambda p: search.astar_search(p, p.h)), timeout)
-        print(f"board #{cnt}, solved #{solved} boards, result: {result[:2]}")
+        print(f"{result[0]} {result[1]}")
         cnt+=1
         if result[2] != None:
             if result[0] != -3:
