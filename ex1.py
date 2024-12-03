@@ -165,9 +165,9 @@ class HarryPotterProblem(search.Problem):
         wizards = new_state['wizards']
         death_eater_paths = new_state['death_eaters']
         horcruxes = new_state['horcruxes']
-        for wiz in wizards:
-            if wizards[wiz][1] <= 0:
-                cost += 60
+        # for wiz in wizards:
+        #     if wizards[wiz][1] <= 0:
+        #         cost += 60
         # deal with destroying hocruxes
         remaining_horcruxes = sum(1 for horcrux in horcruxes.values() if not horcrux[1])
         horcrux_dist = 0
