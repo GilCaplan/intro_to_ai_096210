@@ -138,10 +138,7 @@ class HarryPotterProblem(search.Problem):
 
     def goal_test(self, state):
         """Return True if the state is a goal state."""
-        check_state = json.loads(state)
-        if check_state['voldemort_killed'] and check_state['Game Lost']:
-            print("YOU LOST :(")
-        return check_state['voldemort_killed']
+        return json.loads(state)['voldemort_killed']
 
 
     def h(self, node):
@@ -157,14 +154,14 @@ class HarryPotterProblem(search.Problem):
         # adding to score if wizard dies since it's GAME OVER in this case
         cost = sum(60 for wiz in wizards if wizards[wiz][1] <= 0)
 
-        # deal with destroying hocruxes
+        # deal with destroying horcruxes
         remaining_horcruxes = sum(1 for horcrux in horcruxes.values() if not horcrux[1])
         horcrux_dist = 0
         if remaining_horcruxes > 0:
             cost += max([self.shortest_dist_from_voldemort[x][y] for [(x,y), _] in horcruxes.values()])
             for wizard in wizards.keys():
-                horcrux_dist += min(manhattan_distance(wizards[wizard][0], coord)\
-                                            for coord, _ in horcruxes.values())
+                horcrux_dist += \
+                    min(manhattan_distance(wizards[wizard][0], coord) for coord, _ in horcruxes.values())
             cost += remaining_horcruxes + horcrux_dist
 
         # Harry searching for Voldemort
