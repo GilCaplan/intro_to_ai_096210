@@ -202,8 +202,6 @@ class HarryPotterProblem(search.Problem):
         Heuristic function for A* search.
         Estimates the minimum number of moves needed to reach the goal.
         """
-
-        # IDEAS- add points if life lost (might make not admissible need to check)
         new_state = json.loads(node.state)
         wizards = new_state['wizards']
         horcruxes = new_state['horcruxes']
