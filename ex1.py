@@ -50,7 +50,6 @@ class HarryPotterProblem(search.Problem):
             'horcruxes_destroyed': sys.maxsize,
             'voldemort_killed': False,
         }
-        self.min_max_cache = {}
         self.low_num_horcruxes = len(initial_state['horcruxes']) < 4
         self.small_board = len(self.map) * len(self.map[0]) < 21
         self.voldemort_loc = next(
@@ -75,7 +74,7 @@ class HarryPotterProblem(search.Problem):
     def compute_max_distance_voldermort(self, horcrux_positions):
         if self.small_board and self.low_num_horcruxes:
             return 0
-        return max([self.shortest_dist_from_voldemort[x][y] for x, y in horcrux_positions])
+        return max([self.shortest_dist_from_voldemort[x][y] for x, y in horcrux_positions]) + 1
 
     def actions(self, state):
         """Return the valid actions that can be executed in the given state."""
@@ -119,7 +118,8 @@ class HarryPotterProblem(search.Problem):
         actions = []
         for wizard in wizards:
             destroy_hocrox = get_destroy_horcrux_actions(wizards[wizard][0], wizard)
-            if len(destroy_hocrox) > 0: # make more smart if deatheaters try to kill a hero?
+            if len(destroy_hocrox) > 0 and not any([wizards[wizard][0] == p[new_state['move_num'] % len(p)] for p in self.death_eaters.values()]):
+            # make more smart if deatheaters try to kill a hero?
                 actions.append(destroy_hocrox)
             else:
                 actions.append(get_move_actions(wizards[wizard][0], wizard,) + destroy_hocrox\
