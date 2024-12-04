@@ -64,6 +64,10 @@ class HarryPotterProblem(search.Problem):
         return min(abs(wizard_loc[0] - hx) + abs(wizard_loc[1] - hy) for hx, hy in horcrux_positions)
 
     @lru_cache(maxsize=None)
+    def is_wizard_safe(self, wiz_loc, turn):
+        return not any([wiz_loc[0] == p[turn % len(p)] for p in self.death_eaters.values()])
+
+    @lru_cache(maxsize=None)
     def compute_max_manhattan_distance(self, wizard_loc, horcrux_positions):
         return max(abs(wizard_loc[0] - hx) + abs(wizard_loc[1] - hy) for hx, hy in horcrux_positions)
     @lru_cache(maxsize=None)
@@ -115,16 +119,20 @@ class HarryPotterProblem(search.Problem):
                     return tuple([('kill', wiz_name)])
             return ()
 
+        remaining_horcruxes = sum(1 for horcrux in horcruxes.values() if not horcrux[1])
         actions = []
         for wizard in wizards:
             destroy_hocrox = get_destroy_horcrux_actions(wizards[wizard][0], wizard)
-            if len(destroy_hocrox) > 0 and not any([wizards[wizard][0] == p[new_state['move_num'] % len(p)] for p in self.death_eaters.values()]):
-            # make more smart if deatheaters try to kill a hero?
+            if len(destroy_hocrox) > 0 and self.is_wizard_safe(tuple(wizards[wizard][0]), new_state['move_num']):
                 actions.append(destroy_hocrox)
+            elif remaining_horcruxes == 0 and self.is_wizard_safe(tuple(wizards[wizard][0]), new_state['move_num']):
+                if wizard == 'Harry Potter':
+                    actions.append(get_move_actions(wizards[wizard][0], wizard,) + get_kill_voldemort_action(wizards[wizard][0], wizard) + get_wait_actions(wizard))
+                else:
+                    actions.append(get_wait_actions(wizard))
             else:
                 actions.append(get_move_actions(wizards[wizard][0], wizard,) + destroy_hocrox\
                               + get_wait_actions(wizard) + get_kill_voldemort_action(wizards[wizard][0], wizard))
-        # another prune is if all horcrux destroyed then if no death eater then have other wizards wait
         actions = tuple(itertools.product(*actions))
         return actions
 
@@ -172,8 +180,6 @@ class HarryPotterProblem(search.Problem):
         """
 
         # IDEAS- add points if life lost (might make not admissible need to check)
-        def manhattan_distance(loc1, loc2):
-            return abs(loc1[0] - loc2[0]) + abs(loc1[1] - loc2[1])
         new_state = json.loads(node.state)
         wizards = new_state['wizards']
         horcruxes = new_state['horcruxes']
@@ -198,7 +204,9 @@ class HarryPotterProblem(search.Problem):
             new_state['horcruxes_destroyed'] = min([new_state['move_num'], new_state['horcruxes_destroyed']])
             x, y = new_state['wizards']['Harry Potter'][0]
             cost += self.shortest_dist_from_voldemort[x][y]
-            if manhattan_distance(wizards['Harry Potter'][0], self.voldemort_loc) > 0:
+
+
+            if abs(wizards['Harry Potter'][0][0] - self.voldemort_loc[0]) + abs(wizards['Harry Potter'][0][1] - self.voldemort_loc[1]) > 0:
                 cost += 1 if new_state['voldemort_killed'] else 0
         return cost
 
