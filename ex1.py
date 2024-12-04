@@ -10,6 +10,21 @@ ids = ["111111111", "111111111"]
 
 class HarryPotterProblem(search.Problem):
     def __init__(self, initial):
+        def parse_map_to_integers(map):
+            parsed_map = []
+            for row in map:
+                parsed_row = []
+                for cell in row:
+                    if cell == 'I':
+                        parsed_row.append(0)
+                    elif cell == 'P':
+                        parsed_row.append(1)
+                    elif cell == 'V':
+                        parsed_row.append(2)
+                    else:
+                        raise ValueError(f"Unexpected map cell value: {cell}")
+                parsed_map.append(parsed_row)
+            return parsed_map
 
         def bfs(map, start):
             rows, cols = len(map), len(map[0])
@@ -41,7 +56,7 @@ class HarryPotterProblem(search.Problem):
                 death_eater_paths[de] = compute_path(death_eaters[de])
             return death_eater_paths
 
-        self.map = initial['map']
+        self.map = parse_map_to_integers(initial['map'])
         self.death_eaters = update_death_eaters_path(initial['death_eaters'])
         initial_state = {
             'wizards': initial['wizards'],
@@ -53,7 +68,7 @@ class HarryPotterProblem(search.Problem):
         self.low_num_horcruxes = len(initial_state['horcruxes']) < 4
         self.small_board = len(self.map) * len(self.map[0]) < 21
         self.voldemort_loc = next(
-            ((i, j) for i, row in enumerate(self.map) for j, tile in enumerate(row) if tile == 'V'), None)
+            ((i, j) for i, row in enumerate(self.map) for j, tile in enumerate(row) if tile == 2), None)
 
         self.shortest_dist_from_voldemort = bfs(self.map, self.voldemort_loc)
         initial_state = json.dumps(initial_state)
@@ -88,8 +103,8 @@ class HarryPotterProblem(search.Problem):
             for offset in [(0, 1), (0, -1), (1, 0), (-1, 0)]:
                 new_loc = (loc[0] + offset[0], loc[1] + offset[1])
                 if 0 <= new_loc[0] < len(self.map) and 0 <= new_loc[1] < len(self.map[0]) \
-                        and self.map[new_loc[0]][new_loc[1]] != 'I':
-                    if self.map[new_loc[0]][new_loc[1]] == 'V':
+                        and self.map[new_loc[0]][new_loc[1]] != 0:
+                    if self.map[new_loc[0]][new_loc[1]] == 2:
                         if wiz_name != 'Harry Potter':
                             continue
                         if wiz_name == 'Harry Potter' and not all(horcrux[1] for horcrux in horcruxes.values()):
@@ -111,7 +126,7 @@ class HarryPotterProblem(search.Problem):
             # Check if all horcruxes are destroyed
             all_horcruxes_destroyed = all(horcrux[1] for horcrux in horcruxes.values())
 
-            if wiz_name == 'Harry Potter' and self.map[loc[0]][loc[1]] == 'V' and all_horcruxes_destroyed:
+            if wiz_name == 'Harry Potter' and self.map[loc[0]][loc[1]] == 2 and all_horcruxes_destroyed:
                 if new_state['move_num'] > new_state['horcruxes_destroyed']:
                     return tuple([('kill', wiz_name)])
             return ()
@@ -119,26 +134,30 @@ class HarryPotterProblem(search.Problem):
         remaining_horcruxes = sum(1 for horcrux in horcruxes.values() if not horcrux[1])
         actions = []
         for wizard in wizards:
-            is_safe = not any([wizards[wizard][0] == p[new_state['move_num'] % len(p)] \
+            wiz_loc = wizards[wizard][0]
+            is_safe = not any([wiz_loc == p[new_state['move_num'] % len(p)] \
                                for p in self.death_eaters.values()])
-            destroy_hocrox = get_destroy_horcrux_actions(wizards[wizard][0], wizard)
+            destroy_hocrox = get_destroy_horcrux_actions(wiz_loc, wizard)
             if len(destroy_hocrox) > 0 and is_safe:
                 actions.append(destroy_hocrox)
             elif remaining_horcruxes == 0 and is_safe:
                 if wizard == 'Harry Potter':
+                    if self.voldemort_loc == wiz_loc:
+                        get_kill_voldemort_action(wiz_loc, wizard)
+                        continue
                     actions.append(
-                        get_move_actions(wizards[wizard][0], wizard, ) +
-                        get_kill_voldemort_action(wizards[wizard][0], wizard) +
+                        get_move_actions(wiz_loc, wizard, ) +
+                        get_kill_voldemort_action(wiz_loc, wizard) +
                         get_wait_actions(wizard)
                     )
                 else:
                     actions.append(get_wait_actions(wizard))
             else:
                 actions.append(
-                    get_move_actions(wizards[wizard][0], wizard, ) +
+                    get_move_actions(wiz_loc, wizard, ) +
                     destroy_hocrox +
                     get_wait_actions(wizard) +
-                    get_kill_voldemort_action(wizards[wizard][0], wizard))
+                    get_kill_voldemort_action(wiz_loc, wizard))
         actions = tuple(itertools.product(*actions))
         return actions
 
