@@ -63,7 +63,7 @@ def solve_problems(problems):
         except Exception as e:
             print("Error creating problem: ", e)
             return None
-        timeout = 120
+        timeout = 60
         result = check_problem(
             p, (lambda p: search.astar_search(p, p.h)), timeout)
         print(f"{result[0]} {result[1]}")
@@ -81,10 +81,9 @@ def main():
     solve_problems(non_comp_problems)
     print("Solving Complex Problems:")
     solve_problems(comp_problems)
-    # print("done")
     print("Solving Tal Problems:")
-    # solve_problems(t_hard_problems)
-    # print("done")
+    solve_problems(t_hard_problems)
+    print("done")
     return
 
 

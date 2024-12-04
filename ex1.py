@@ -6,10 +6,12 @@ from collections import deque
 import search
 
 ids = ["111111111", "111111111"]
+from functools import lru_cache
 
 # if have time use memoize and bfs from hocrox and use instead of manhatten
 class HarryPotterProblem(search.Problem):
     def __init__(self, initial):
+
         def bfs(map, start):
             rows, cols = len(map), len(map[0])
             distances = [[float('inf')] * cols for _ in range(rows)]
@@ -48,12 +50,32 @@ class HarryPotterProblem(search.Problem):
             'horcruxes_destroyed': sys.maxsize,
             'voldemort_killed': False,
         }
+        self.min_max_cache = {}
+        self.low_num_horcruxes = len(initial_state['horcruxes']) < 4
+        self.small_board = len(self.map) * len(self.map[0]) < 21
         self.voldemort_loc = next(
             ((i, j) for i, row in enumerate(self.map) for j, tile in enumerate(row) if tile == 'V'), None)
 
         self.shortest_dist_from_voldemort = bfs(self.map, self.voldemort_loc)
         initial_state = json.dumps(initial_state)
         search.Problem.__init__(self, initial_state)
+
+    @lru_cache(maxsize=None)
+    def compute_min_manhattan_distance(self, wizard_loc, horcrux_positions):
+        return min(abs(wizard_loc[0] - hx) + abs(wizard_loc[1] - hy) for hx, hy in horcrux_positions)
+
+    @lru_cache(maxsize=None)
+    def compute_max_manhattan_distance(self, wizard_loc, horcrux_positions):
+        return max(abs(wizard_loc[0] - hx) + abs(wizard_loc[1] - hy) for hx, hy in horcrux_positions)
+    @lru_cache(maxsize=None)
+    def compute_min_distance(self, horcrux_positions):
+        return min([self.shortest_dist_from_voldemort[x][y] for x, y in horcrux_positions])
+
+    @lru_cache(maxsize=None)
+    def compute_max_distance_voldermort(self, horcrux_positions):
+        if self.small_board and self.low_num_horcruxes:
+            return 0
+        return max([self.shortest_dist_from_voldemort[x][y] for x, y in horcrux_positions])
 
     def actions(self, state):
         """Return the valid actions that can be executed in the given state."""
@@ -96,8 +118,13 @@ class HarryPotterProblem(search.Problem):
 
         actions = []
         for wizard in wizards:
-            actions.append(get_move_actions(wizards[wizard][0], wizard,) + get_destroy_horcrux_actions(wizards[wizard][0], wizard)\
-                          + get_wait_actions(wizard) + get_kill_voldemort_action(wizards[wizard][0], wizard))
+            destroy_hocrox = get_destroy_horcrux_actions(wizards[wizard][0], wizard)
+            if len(destroy_hocrox) > 0: # make more smart if deatheaters try to kill a hero?
+                actions.append(destroy_hocrox)
+            else:
+                actions.append(get_move_actions(wizards[wizard][0], wizard,) + destroy_hocrox\
+                              + get_wait_actions(wizard) + get_kill_voldemort_action(wizards[wizard][0], wizard))
+        # another prune is if all horcrux destroyed then if no death eater then have other wizards wait
         actions = tuple(itertools.product(*actions))
         return actions
 
@@ -157,10 +184,12 @@ class HarryPotterProblem(search.Problem):
         remaining_horcruxes = sum(1 for horcrux in horcruxes.values() if not horcrux[1])
         horcrux_dist = 0
         if remaining_horcruxes > 0:
-            cost += max([self.shortest_dist_from_voldemort[x][y] for [(x,y), _] in horcruxes.values()])
+            horcrux_positions = tuple([(x, y) for [(x, y), _] in horcruxes.values()])
+            cost += self.compute_max_distance_voldermort(horcrux_positions)
             for wizard in wizards.keys():
-                horcrux_dist += \
-                    min(manhattan_distance(wizards[wizard][0], coord) for coord, _ in horcruxes.values())
+                wizard_loc = tuple(wizards[wizard][0])
+                horcrux_dist += self.compute_min_manhattan_distance(wizard_loc, horcrux_positions)
+
             cost += remaining_horcruxes + horcrux_dist
 
         # Harry searching for Voldemort
