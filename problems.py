@@ -96,3 +96,47 @@ comp_problems = [
     }
 
 ]
+
+check_problems = [
+    {
+        "map": [
+            ['P', 'P', 'P', 'I', 'I'],
+            ['P', 'P', 'P', 'P', 'P'],
+            ['I', 'P', 'P', 'P', 'P'],
+            ['P', 'P', 'P', 'P', 'V']
+        ],
+        "wizards": {"Harry Potter": ((0, 0), 3), "Ron Weasley": ((3, 0), 2)},
+        "death_eaters": {'death_eater1': [(1, 3), (2, 3)]},
+        "horcruxes": [(1, 4), (3, 4)],
+    },
+
+{
+    "map": [
+        ['P', 'P', 'I', 'P', 'P', 'P'],
+        ['P', 'I', 'I', 'P', 'I', 'P'],
+        ['P', 'P', 'P', 'P', 'P', 'P'],
+        ['P', 'P', 'I', 'P', 'V', 'I'],
+        ['I', 'P', 'I', 'P', 'P', 'P'],
+        ['P', 'P', 'P', 'P', 'P', 'P'],
+    ],
+    "wizards": {"Harry Potter": ((0, 0), 2), "Hermione Granger": ((5, 5), 3)},
+    "death_eaters": {
+        'death_eater1': [(2, 1), (2, 2)],
+        'death_eater2': [(4, 3), (4, 4)],
+    },
+    "horcruxes": [(0, 5), (5, 0), (3, 3)],
+},
+
+{
+    "map": [
+        ['P', 'P', 'P', 'P', 'P'],
+        ['P', 'P', 'I', 'P', 'P'],
+        ['P', 'P', 'I', 'P', 'P'],
+        ['P', 'P', 'P', 'P', 'P'],
+        ['P', 'P', 'P', 'P', 'V']
+    ],
+    "wizards": {"Harry Potter": ((0, 0), 3)},
+    "death_eaters": {'death_eater1': [(3, 2), (4, 2)], 'death_eater2': [(1, 2), (2, 2)]},
+    "horcruxes": [(3, 3), (0, 4)],
+}
+]

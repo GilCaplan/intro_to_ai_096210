@@ -102,14 +102,14 @@ class HarryPotterProblem(search.Problem):
             move_actions = []
             for offset in [(0, 1), (0, -1), (1, 0), (-1, 0)]:
                 new_loc = (loc[0] + offset[0], loc[1] + offset[1])
-                if 0 <= new_loc[0] < len(self.map) and 0 <= new_loc[1] < len(self.map[0]) \
-                        and self.map[new_loc[0]][new_loc[1]] != 0:
-                    if self.map[new_loc[0]][new_loc[1]] == 2:
-                        if wiz_name != 'Harry Potter':
-                            continue
-                        if wiz_name == 'Harry Potter' and not all(horcrux[1] for horcrux in horcruxes.values()):
-                            continue
-                    move_actions.append(('move', wiz_name, new_loc))
+                if 0 <= new_loc[0] < len(self.map) and 0 <= new_loc[1] < len(self.map[0]):
+                    if self.map[new_loc[0]][new_loc[1]] != 0:
+                        if self.map[new_loc[0]][new_loc[1]] == 2:
+                            if wiz_name != 'Harry Potter':
+                                continue
+                            if wiz_name == 'Harry Potter' and not all(horcrux[1] for horcrux in horcruxes.values()):
+                                continue
+                        move_actions.append(('move', wiz_name, new_loc))
             return tuple(move_actions)
 
         def get_destroy_horcrux_actions(loc, wiz_name):

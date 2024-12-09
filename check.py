@@ -1,7 +1,7 @@
 import ex1
 import search
 import time
-from problems import non_comp_problems, comp_problems
+from problems import non_comp_problems, comp_problems, check_problems
 from problemsT import t_problems, t_hard_problems
 
 def timeout_exec(func, args=(), kwargs={}, timeout_duration=10, default=None):
@@ -66,7 +66,7 @@ def solve_problems(problems):
         timeout = 60
         result = check_problem(
             p, (lambda p: search.astar_search(p, p.h)), timeout)
-        print(f"{result[0]} {result[1]}")
+        print(f"{result[0]} {result[1]}, {result[2]}")
         cnt += 1
         if result[2] != None:
             if result[0] != -3:
@@ -78,9 +78,9 @@ def main():
     print(ex1.ids)
     """Here goes the input you want to check"""
     print("Solving Non Complex Problems:")
-    solve_problems(non_comp_problems)
-    print("Solving Complex Problems:")
-    solve_problems(comp_problems)
+    # solve_problems(non_comp_problems)
+    # print("Solving Complex Problems:")
+    # solve_problems(comp_problems)
     print("Solving Tal Problems:")
     solve_problems(t_hard_problems)
     print("done")
