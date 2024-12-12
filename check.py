@@ -77,7 +77,7 @@ def solve_problems(problems):
 def main():
     print(ex1.ids)
     """Here goes the input you want to check"""
-    print("Solving Non Complex Problems:")
+    # print("Solving Non Complex Problems:")
     # solve_problems(non_comp_problems)
     # print("Solving Complex Problems:")
     # solve_problems(comp_problems)

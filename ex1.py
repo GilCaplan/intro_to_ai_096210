@@ -26,8 +26,8 @@ class HarryPotterProblem(search.Problem):
                 parsed_map.append(parsed_row)
             return parsed_map
 
-        def bfs(map, start):
-            rows, cols = len(map), len(map[0])
+        def bfs(grid, start):
+            rows, cols = len(grid), len(grid[0])
             distances = [[float('inf')] * cols for _ in range(rows)]
             directions = [(-1, 0), (1, 0), (0, -1), (0, 1)]
 
@@ -40,8 +40,7 @@ class HarryPotterProblem(search.Problem):
 
                 for dx, dy in directions:
                     nx, ny = x + dx, y + dy
-                    if 0 <= nx < rows and 0 <= ny < cols and distances[nx][ny] == float('inf') \
-                            and map[nx][ny] != 'I':
+                    if 0 <= nx < rows and 0 <= ny < cols and distances[nx][ny] == float('inf') and grid[nx][ny] != 0:
                         distances[nx][ny] = current_dist + 1
                         queue.append((nx, ny))
             return distances
@@ -71,6 +70,7 @@ class HarryPotterProblem(search.Problem):
             ((i, j) for i, row in enumerate(self.map) for j, tile in enumerate(row) if tile == 2), None)
 
         self.shortest_dist_from_voldemort = bfs(self.map, self.voldemort_loc)
+        self.shortest_dist_from_horcruxes = [bfs(self.map, horcrux) for horcrux in initial['horcruxes']]
         initial_state = json.dumps(initial_state)
         search.Problem.__init__(self, initial_state)
 
@@ -206,7 +206,7 @@ class HarryPotterProblem(search.Problem):
         wizards = new_state['wizards']
         horcruxes = new_state['horcruxes']
         # adding to score if wizard dies since it's GAME OVER in this case
-        cost = any(100 for wiz in wizards if wizards[wiz][1] <= 0)
+        cost = any(1000 for wiz in wizards if wizards[wiz][1] <= 0)
 
         # deal with destroying horcruxes
         remaining_horcruxes = sum(1 for horcrux in horcruxes.values() if not horcrux[1])
@@ -216,7 +216,8 @@ class HarryPotterProblem(search.Problem):
             cost += self.compute_max_distance_voldermort(horcrux_positions)
             for wizard in wizards.keys():
                 wizard_loc = tuple(wizards[wizard][0])
-                horcrux_dist += self.compute_min_manhattan_distance(wizard_loc, horcrux_positions)
+                horcrux_dist += min(self.shortest_dist_from_horcruxes[i][wizard_loc[0]][wizard_loc[1]] for i, hocrux in enumerate(horcrux_positions))
+                # horcrux_dist += self.compute_min_manhattan_distance(wizard_loc, horcrux_positions)
 
             cost += remaining_horcruxes + horcrux_dist
 
