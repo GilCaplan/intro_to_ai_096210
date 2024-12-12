@@ -216,9 +216,8 @@ class HarryPotterProblem(search.Problem):
             cost += self.compute_max_distance_voldermort(horcrux_positions)
             for wizard in wizards.keys():
                 wizard_loc = tuple(wizards[wizard][0])
-                horcrux_dist += min(self.shortest_dist_from_horcruxes[i][wizard_loc[0]][wizard_loc[1]] for i, hocrux in enumerate(horcrux_positions))
-                # horcrux_dist += self.compute_min_manhattan_distance(wizard_loc, horcrux_positions)
-
+                # cost += min(self.shortest_dist_from_horcruxes[i][wizard_loc[0]][wizard_loc[1]] for i, hocrux in enumerate(horcrux_positions))
+                cost += self.compute_min_manhattan_distance(wizard_loc, horcrux_positions)
             cost += remaining_horcruxes + horcrux_dist
 
         # Harry searching for Voldemort
