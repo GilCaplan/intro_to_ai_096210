@@ -4,6 +4,8 @@ import sys
 from collections import deque
 from functools import lru_cache
 import search
+import random
+
 
 ids = ["111111111", "111111111"]
 
@@ -87,10 +89,12 @@ class HarryPotterProblem(search.Problem):
         return min([self.shortest_dist_from_voldemort[x][y] for x, y in horcrux_positions])
 
     @lru_cache(maxsize=None)
-    def compute_max_distance_voldermort(self, horcrux_positions):
+    def compute_distance_voldermort(self, horcrux_positions):
         if self.small_board and self.low_num_horcruxes:
             return 0
-        return max([self.shortest_dist_from_voldemort[x][y] for x, y in horcrux_positions]) + 1
+        dists = [self.shortest_dist_from_voldemort[x][y] for x, y in horcrux_positions]
+        # return sum(dists) / len(dists)
+        return max(dists) # since we still have to reach the last horcrux until we can get voldermort
 
     def actions(self, state):
         """Return the valid actions that can be executed in the given state."""
@@ -197,28 +201,66 @@ class HarryPotterProblem(search.Problem):
         """Return True if the state is a goal state."""
         return json.loads(state)['voldemort_killed']
 
+    @lru_cache(maxsize=None)
+    def compute_greedy_wizard_horcrux_distances(self, wizard_locations, horcrux_positions):
+        """
+        Compute greedy assignment of wizards to horcruxes by iteratively matching
+        each wizard to their closest unassigned horcrux.
+
+        Args:
+            wizards: Dictionary of wizard information
+            horcrux_positions: List of (x,y) positions of horcruxes
+        Returns:
+            float: Sum of assigned distances
+        """
+        available_horcruxes = list(horcrux_positions)
+        total_distance = 0
+
+        randomized_wizard_locations = list(wizard_locations)  # Create a copy if the original shouldn't be modified
+        random.shuffle(randomized_wizard_locations)
+
+        # Iterate over the randomized order
+        for wiz_loc in randomized_wizard_locations:
+            if not available_horcruxes:
+                break
+
+            min_dist = float('inf')
+            best_horcrux_idx = 0
+
+            for i, horcrux_pos in enumerate(available_horcruxes):
+                dist = abs(wiz_loc[0] - horcrux_pos[0]) + \
+                       abs(wiz_loc[1] - horcrux_pos[1])
+                if dist < min_dist:
+                    min_dist = dist
+                    best_horcrux_idx = i
+
+            total_distance += min_dist
+            available_horcruxes.pop(best_horcrux_idx)
+
+        return total_distance
+
     def h(self, node):
         """
         Heuristic function for A* search.
         Estimates the minimum number of moves needed to reach the goal.
+        Moves include moving to a new location, destroying a horcrux, waiting, and killing Voldemort.
         """
         new_state = json.loads(node.state)
         wizards = new_state['wizards']
         horcruxes = new_state['horcruxes']
-        # adding to score if wizard dies since it's GAME OVER in this case
-        cost = any(1000 for wiz in wizards if wizards[wiz][1] <= 0)
 
-        # deal with destroying horcruxes
+        # return infinity if wizard dies since it's GAME OVER in this case
+        if any(wizards[wiz][1] <= 0 for wiz in wizards):
+            return float('inf')
+        # deal with destroying horcruxes since it costs one turn
         remaining_horcruxes = sum(1 for horcrux in horcruxes.values() if not horcrux[1])
-        horcrux_dist = 0
+        cost = 0
         if remaining_horcruxes > 0:
-            horcrux_positions = tuple([(x, y) for [(x, y), _] in horcruxes.values()])
-            cost += self.compute_max_distance_voldermort(horcrux_positions)
-            for wizard in wizards.keys():
-                wizard_loc = tuple(wizards[wizard][0])
-                # cost += min(self.shortest_dist_from_horcruxes[i][wizard_loc[0]][wizard_loc[1]] for i, hocrux in enumerate(horcrux_positions))
-                cost += self.compute_min_manhattan_distance(wizard_loc, horcrux_positions)
-            cost += remaining_horcruxes + horcrux_dist
+            horcrux_positions = tuple([(x, y) for [(x, y), h] in horcruxes.values() if not h])
+            wiz_locs = tuple([(x, y) for [(x, y), _] in wizards.values()])
+            # cost += self.compute_distance_voldermort(horcrux_positions)
+            cost += self.compute_greedy_wizard_horcrux_distances(wiz_locs, horcrux_positions)
+            cost += remaining_horcruxes
 
         # Harry searching for Voldemort
         # using pre-computed distances from voldermort through BFS
