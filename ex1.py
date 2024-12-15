@@ -111,7 +111,7 @@ class HarryPotterProblem(search.Problem):
                         if self.map[new_loc[0]][new_loc[1]] == 2:
                             if wiz_name != 'Harry Potter':
                                 continue
-                            if wiz_name == 'Harry Potter' and not all(horcrux[1] for horcrux in horcruxes.values()):
+                            if wiz_name == 'Harry Potter' and any(not horcrux[1] for horcrux in horcruxes.values()):
                                 continue
                         move_actions.append(('move', wiz_name, new_loc))
             return tuple(move_actions)
@@ -216,11 +216,8 @@ class HarryPotterProblem(search.Problem):
         available_horcruxes = list(horcrux_positions)
         total_distance = 0
 
-        randomized_wizard_locations = list(wizard_locations)  # Create a copy if the original shouldn't be modified
-        random.shuffle(randomized_wizard_locations)
-
-        # Iterate over the randomized order
-        for wiz_loc in randomized_wizard_locations:
+        # For each wizard location, find closest available horcrux
+        for wiz_loc in wizard_locations:
             if not available_horcruxes:
                 break
 
@@ -267,7 +264,10 @@ class HarryPotterProblem(search.Problem):
         else:
             new_state['horcruxes_destroyed'] = min([new_state['move_num'], new_state['horcruxes_destroyed']])
             x, y = new_state['wizards']['Harry Potter'][0]
+            # xv, yv = self.voldemort_loc
             cost += self.shortest_dist_from_voldemort[x][y]
+            # cost += x-xv + y-yv
+
 
             if abs(wizards['Harry Potter'][0][0] - self.voldemort_loc[0]) + abs(
                     wizards['Harry Potter'][0][1] - self.voldemort_loc[1]) > 0:
