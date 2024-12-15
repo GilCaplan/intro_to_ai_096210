@@ -58,18 +58,18 @@ comp_problems = [
         "death_eaters": {'death_eater1': [(0, 1), (0, 0)]},
         "horcruxes": [(1, 3)],
     },
-    # {
-    #     "map": [
-    #         ['P', 'P', 'I', 'P', 'P'],
-    #         ['I', 'P', 'P', 'P', 'P'],
-    #         ['P', 'P', 'I', 'P', 'P'],
-    #         ['P', 'P', 'P', 'P', 'P'],
-    #         ['P', 'P', 'P', 'P', 'V']
-    #     ],
-    #     "wizards": {"Harry Potter": ((0, 0), 3), "Ron Weasley": ((0, 1), 2)},
-    #     "death_eaters": {'death_eater1': [(0, 1), (1, 1), (1, 2)]},
-    #     "horcruxes": [(4, 3)],
-    # },
+    {
+        "map": [
+            ['P', 'P', 'I', 'P', 'P'],
+            ['I', 'P', 'P', 'P', 'P'],
+            ['P', 'P', 'I', 'P', 'P'],
+            ['P', 'P', 'P', 'P', 'P'],
+            ['P', 'P', 'P', 'P', 'V']
+        ],
+        "wizards": {"Harry Potter": ((0, 0), 3), "Ron Weasley": ((0, 1), 2)},
+        "death_eaters": {'death_eater1': [(0, 1), (1, 1), (1, 2)]},
+        "horcruxes": [(4, 3)],
+    },
     {
         "map": [
             ['P', 'P', 'P', 'P', 'I'],

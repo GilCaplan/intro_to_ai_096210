@@ -93,8 +93,7 @@ class HarryPotterProblem(search.Problem):
         if self.small_board and self.low_num_horcruxes:
             return 0
         dists = [self.shortest_dist_from_voldemort[x][y] for x, y in horcrux_positions]
-        # return sum(dists) / len(dists)
-        return max(dists) # since we still have to reach the last horcrux until we can get voldermort
+        return sum(dists)
 
     def actions(self, state):
         """Return the valid actions that can be executed in the given state."""
@@ -255,23 +254,16 @@ class HarryPotterProblem(search.Problem):
         if remaining_horcruxes > 0:
             horcrux_positions = tuple([(x, y) for [(x, y), h] in horcruxes.values() if not h])
             wiz_locs = tuple([(x, y) for [(x, y), _] in wizards.values()])
-            # cost += self.compute_distance_voldermort(horcrux_positions)
+            cost += self.compute_distance_voldermort(horcrux_positions)
             cost += self.compute_greedy_wizard_horcrux_distances(wiz_locs, horcrux_positions)
             cost += remaining_horcruxes
-
-        # Harry searching for Voldemort
-        # using pre-computed distances from voldermort through BFS
         else:
             new_state['horcruxes_destroyed'] = min([new_state['move_num'], new_state['horcruxes_destroyed']])
             x, y = new_state['wizards']['Harry Potter'][0]
             # xv, yv = self.voldemort_loc
-            cost += self.shortest_dist_from_voldemort[x][y]
             # cost += x-xv + y-yv
-
-
-            if abs(wizards['Harry Potter'][0][0] - self.voldemort_loc[0]) + abs(
-                    wizards['Harry Potter'][0][1] - self.voldemort_loc[1]) > 0:
-                cost += 1 if new_state['voldemort_killed'] else 0
+            cost += self.shortest_dist_from_voldemort[x][y]
+            cost += 1 if not new_state['voldemort_killed'] else 0
         return cost
 
 
