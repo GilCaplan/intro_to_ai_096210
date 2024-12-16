@@ -82,10 +82,10 @@ def main():
     solve_problems(non_comp_problems)
     print("Solving Complex Problems:")
     solve_problems(comp_problems)
-    # print("Solving Tal Problems:")
-    # solve_problems(t_hard_problems)
-    print("Solving Check Problems:")
-    solve_problems(check_problems)
+    print("Solving Tal Problems:")
+    solve_problems(t_hard_problems)
+    # print("Solving Check Problems:")
+    # solve_problems(check_problems)
     print("done")
 
 

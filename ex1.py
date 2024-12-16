@@ -74,25 +74,6 @@ class HarryPotterProblem(search.Problem):
         initial_state = json.dumps(initial_state)
         search.Problem.__init__(self, initial_state)
 
-    @lru_cache(maxsize=None)
-    def compute_min_manhattan_distance(self, wizard_loc, horcrux_positions):
-        return min(abs(wizard_loc[0] - hx) + abs(wizard_loc[1] - hy) for hx, hy in horcrux_positions)
-
-    @lru_cache(maxsize=None)
-    def compute_max_manhattan_distance(self, wizard_loc, horcrux_positions):
-        return max(abs(wizard_loc[0] - hx) + abs(wizard_loc[1] - hy) for hx, hy in horcrux_positions)
-
-    @lru_cache(maxsize=None)
-    def compute_min_distance(self, horcrux_positions):
-        return min([self.shortest_dist_from_voldemort[x][y] for x, y in horcrux_positions])
-
-    @lru_cache(maxsize=None)
-    def compute_distance_voldermort(self, horcrux_positions):
-        if self.small_board and self.low_num_horcruxes:
-            return 0
-        dists = [self.shortest_dist_from_voldemort[x][y] for x, y in horcrux_positions]
-        return sum(dists) / (len(horcrux_positions) + 1)
-
     def actions(self, state):
         """Return the valid actions that can be executed in the given state."""
         new_state = json.loads(state)
@@ -226,8 +207,6 @@ class HarryPotterProblem(search.Problem):
                 continue
             total_distance += min_dist
             assigned_horcruxes.add(best_horcrux)
-
-
         return total_distance + 1 if total_distance > 0 else total_distance
 
     def h(self, node):
@@ -244,7 +223,7 @@ class HarryPotterProblem(search.Problem):
             return float('inf')
 
         horcrux_positions = tuple([(x, y) for [(x, y), h] in horcruxes.values() if not h])
-        wiz_locs = tuple([(x, y) for wiz, [(x, y), _] in zip(wizards, wizards.values()) if wiz != "Harry Potter"]\
+        wiz_locs = tuple([(x, y) for wiz, [(x, y), _] in zip(wizards, wizards.values()) if wiz != "Harry Potter"] \
                         + [tuple(wizards["Harry Potter"][0])])
         cost = self.compute_greedy_wizard_horcrux_distances(wiz_locs, horcrux_positions, tuple(wizards["Harry Potter"][0]))
         x, y = wizards["Harry Potter"][0]
