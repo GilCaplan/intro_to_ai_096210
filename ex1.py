@@ -73,7 +73,6 @@ class HarryPotterProblem(search.Problem):
             ((i, j) for i, row in enumerate(self.map) for j, tile in enumerate(row) if tile == 2), None)
 
         self.shortest_dist_from_voldemort = bfs(self.map, self.voldemort_loc)
-        self.shortest_dist_from_horcruxes = [bfs(self.map, horcrux) for horcrux in initial['horcruxes']]
         initial_state = json.dumps(initial_state)
         search.Problem.__init__(self, initial_state)
 

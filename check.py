@@ -84,8 +84,9 @@ def main():
     solve_problems(comp_problems)
     # print("Solving Tal Problems:")
     # solve_problems(t_hard_problems)
+    print("Solving Check Problems:")
+    solve_problems(check_problems)
     print("done")
-    return
 
 
 if __name__ == '__main__':
