@@ -4,9 +4,7 @@ import sys
 from collections import deque
 from functools import lru_cache
 import search
-import random
 import heapq
-import math
 
 ids = ["111111111", "111111111"]
 
@@ -201,7 +199,7 @@ class HarryPotterProblem(search.Problem):
         return json.loads(state)['voldemort_killed']
 
     @lru_cache(maxsize=None)
-    def compute_greedy_wizard_horcrux_distances(self, wizard_locations, horcrux_positions):
+    def compute_greedy_wizard_horcrux_distances(self, wizard_locations, horcrux_positions, harry_pos):
         """
         Compute greedy assignment of wizards to horcruxes by iteratively matching
         each wizard to their closest unassigned horcrux.
@@ -244,15 +242,14 @@ class HarryPotterProblem(search.Problem):
         if any(wizards[wiz][1] <= 0 for wiz in wizards):
             return float('inf')
 
-        remaining_horcruxes = sum(1 for horcrux in horcruxes.values() if not horcrux[1])
         horcrux_positions = tuple([(x, y) for [(x, y), h] in horcruxes.values() if not h])
-        wiz_locs = tuple([(x, y) for [(x, y), _] in wizards.values()])
-
-        cost = 0
-        cost += self.compute_greedy_wizard_horcrux_distances(wiz_locs, horcrux_positions)
+        wiz_locs = tuple([(x, y) for wiz, [(x, y), _] in zip(wizards, wizards.values()) if wiz != "Harry Potter"]\
+                        + [tuple(wizards["Harry Potter"][0])])
+        cost = self.compute_greedy_wizard_horcrux_distances(wiz_locs, horcrux_positions, tuple(wizards["Harry Potter"][0]))
         x, y = wizards["Harry Potter"][0]
-        cost += self.shortest_dist_from_voldemort[x][y] if not self.small_board or not self.low_num_horcruxes else 0
-        return cost
+        if self.small_board and self.low_num_horcruxes:
+            return cost
+        return cost + self.shortest_dist_from_voldemort[x][y]
 
 
 def create_harrypotter_problem(game):
