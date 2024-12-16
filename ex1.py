@@ -5,7 +5,8 @@ from collections import deque
 from functools import lru_cache
 import search
 import random
-
+import heapq
+import math
 
 ids = ["111111111", "111111111"]
 
@@ -201,37 +202,31 @@ class HarryPotterProblem(search.Problem):
         return json.loads(state)['voldemort_killed']
 
     @lru_cache(maxsize=None)
+
     def compute_greedy_wizard_horcrux_distances(self, wizard_locations, horcrux_positions):
         """
         Compute greedy assignment of wizards to horcruxes by iteratively matching
         each wizard to their closest unassigned horcrux.
 
         Args:
-            wizards: Dictionary of wizard information
-            horcrux_positions: List of (x,y) positions of horcruxes
+            wizard_locations: List of (x, y) tuples representing the wizard positions.
+            horcrux_positions: List of (x, y) tuples representing the horcrux positions.
         Returns:
-            float: Sum of assigned distances
+            float: Sum of assigned distances.
         """
-        available_horcruxes = list(horcrux_positions)
+        available_horcruxes = [(abs(wiz_loc[0] - horcrux_pos[0]) + abs(wiz_loc[1] - horcrux_pos[1]), horcrux_pos)
+                               for wiz_loc in wizard_locations for horcrux_pos in horcrux_positions]
+
+        heapq.heapify(available_horcruxes)  # Heapify the list to use the heap structure for efficient access
         total_distance = 0
 
-        # For each wizard location, find closest available horcrux
         for wiz_loc in wizard_locations:
             if not available_horcruxes:
                 break
 
-            min_dist = float('inf')
-            best_horcrux_idx = 0
-
-            for i, horcrux_pos in enumerate(available_horcruxes):
-                dist = abs(wiz_loc[0] - horcrux_pos[0]) + \
-                       abs(wiz_loc[1] - horcrux_pos[1])
-                if dist < min_dist:
-                    min_dist = dist
-                    best_horcrux_idx = i
-
+            # Pop the closest horcrux from the heap
+            min_dist, best_horcrux = heapq.heappop(available_horcruxes)
             total_distance += min_dist
-            available_horcruxes.pop(best_horcrux_idx)
 
         return total_distance
 
@@ -245,25 +240,17 @@ class HarryPotterProblem(search.Problem):
         wizards = new_state['wizards']
         horcruxes = new_state['horcruxes']
 
-        # return infinity if wizard dies since it's GAME OVER in this case
         if any(wizards[wiz][1] <= 0 for wiz in wizards):
             return float('inf')
-        # deal with destroying horcruxes since it costs one turn
+
         remaining_horcruxes = sum(1 for horcrux in horcruxes.values() if not horcrux[1])
+        horcrux_positions = tuple([(x, y) for [(x, y), h] in horcruxes.values() if not h])
+
         cost = 0
-        if remaining_horcruxes > 0:
-            horcrux_positions = tuple([(x, y) for [(x, y), h] in horcruxes.values() if not h])
-            wiz_locs = tuple([(x, y) for [(x, y), _] in wizards.values()])
-            cost += self.compute_distance_voldermort(horcrux_positions)
-            cost += self.compute_greedy_wizard_horcrux_distances(wiz_locs, horcrux_positions)
-            cost += remaining_horcruxes
-        else:
-            new_state['horcruxes_destroyed'] = min([new_state['move_num'], new_state['horcruxes_destroyed']])
-            x, y = new_state['wizards']['Harry Potter'][0]
-            # xv, yv = self.voldemort_loc
-            # cost += x-xv + y-yv
-            cost += self.shortest_dist_from_voldemort[x][y]
-            cost += 1 if not new_state['voldemort_killed'] else 0
+        wiz_locs = tuple([(x, y) for [(x, y), _] in wizards.values()])
+        cost += self.compute_greedy_wizard_horcrux_distances(wiz_locs, horcrux_positions)
+        cost += remaining_horcruxes
+        cost += self.compute_distance_voldermort(horcrux_positions)
         return cost
 
 
