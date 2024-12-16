@@ -73,7 +73,6 @@ class HarryPotterProblem(search.Problem):
             ((i, j) for i, row in enumerate(self.map) for j, tile in enumerate(row) if tile == 2), None)
 
         self.shortest_dist_from_voldemort = bfs(self.map, self.voldemort_loc)
-        self.shortest_dist_from_horcruxes = [bfs(self.map, horcrux) for horcrux in initial['horcruxes']]
         initial_state = json.dumps(initial_state)
         search.Problem.__init__(self, initial_state)
 
@@ -230,7 +229,7 @@ class HarryPotterProblem(search.Problem):
             total_distance += min_dist
             assigned_horcruxes.add(best_horcrux)
 
-        return total_distance
+        return total_distance + 1 if total_distance > 0 else total_distance
 
     def h(self, node):
         """
@@ -251,10 +250,8 @@ class HarryPotterProblem(search.Problem):
 
         cost = 0
         cost += self.compute_greedy_wizard_horcrux_distances(wiz_locs, horcrux_positions)
-        cost += remaining_horcruxes
         x, y = wizards["Harry Potter"][0]
-        cost += self.compute_distance_voldermort(horcrux_positions) if remaining_horcruxes > 0 else 0
-        cost += self.shortest_dist_from_voldemort[x][y] if remaining_horcruxes == 0 else 0
+        cost += self.shortest_dist_from_voldemort[x][y]
         return cost
 
 
