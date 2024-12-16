@@ -227,6 +227,7 @@ class HarryPotterProblem(search.Problem):
             total_distance += min_dist
             assigned_horcruxes.add(best_horcrux)
 
+
         return total_distance + 1 if total_distance > 0 else total_distance
 
     def h(self, node):
