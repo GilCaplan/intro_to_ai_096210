@@ -251,7 +251,7 @@ class HarryPotterProblem(search.Problem):
         cost = 0
         cost += self.compute_greedy_wizard_horcrux_distances(wiz_locs, horcrux_positions)
         x, y = wizards["Harry Potter"][0]
-        cost += self.shortest_dist_from_voldemort[x][y]
+        cost += self.shortest_dist_from_voldemort[x][y] if not self.small_board or not self.low_num_horcruxes else 0
         return cost
 
 
