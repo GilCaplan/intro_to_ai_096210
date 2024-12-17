@@ -47,40 +47,40 @@ non_comp_problems = [
 ]
 
 comp_problems = [
-    # {
-    #     "map": [
-    #         ['P', 'P', 'I', 'I'],
-    #         ['P', 'P', 'P', 'P'],
-    #         ['I', 'P', 'I', 'P'],
-    #         ['P', 'P', 'V', 'I']
-    #     ],
-    #     "wizards": {"Harry Potter": ((2, 1), 1), "Hermione Granger": ((0, 0), 2)},
-    #     "death_eaters": {'death_eater1': [(0, 1), (0, 0)]},
-    #     "horcruxes": [(1, 3)],
-    # },
-    # {
-    #     "map": [
-    #         ['P', 'P', 'I', 'P', 'P'],
-    #         ['I', 'P', 'P', 'P', 'P'],
-    #         ['P', 'P', 'I', 'P', 'P'],
-    #         ['P', 'P', 'P', 'P', 'P'],
-    #         ['P', 'P', 'P', 'P', 'V']
-    #     ],
-    #     "wizards": {"Harry Potter": ((0, 0), 3), "Ron Weasley": ((0, 1), 2)},
-    #     "death_eaters": {'death_eater1': [(0, 1), (1, 1), (1, 2)]},
-    #     "horcruxes": [(4, 3)],
-    # },
-    # {
-    #     "map": [
-    #         ['P', 'P', 'P', 'P', 'I'],
-    #         ['P', 'P', 'I', 'P', 'P'],
-    #         ['P', 'I', 'I', 'P', 'P'],
-    #         ['P', 'V', 'P', 'P', 'P'],
-    #     ],
-    #     "wizards": {"Harry Potter": ((0, 0), 2), "Ron Weasley": ((0, 1), 2)},
-    #     "death_eaters": {'death_eater1': [(0, 1), (1, 1)]},
-    #     "horcruxes": [(0, 3), (1, 3), (3, 0), (2, 4)],
-    # },
+    {
+        "map": [
+            ['P', 'P', 'I', 'I'],
+            ['P', 'P', 'P', 'P'],
+            ['I', 'P', 'I', 'P'],
+            ['P', 'P', 'V', 'I']
+        ],
+        "wizards": {"Harry Potter": ((2, 1), 1), "Hermione Granger": ((0, 0), 2)},
+        "death_eaters": {'death_eater1': [(0, 1), (0, 0)]},
+        "horcruxes": [(1, 3)],
+    },
+    {
+        "map": [
+            ['P', 'P', 'I', 'P', 'P'],
+            ['I', 'P', 'P', 'P', 'P'],
+            ['P', 'P', 'I', 'P', 'P'],
+            ['P', 'P', 'P', 'P', 'P'],
+            ['P', 'P', 'P', 'P', 'V']
+        ],
+        "wizards": {"Harry Potter": ((0, 0), 3), "Ron Weasley": ((0, 1), 2)},
+        "death_eaters": {'death_eater1': [(0, 1), (1, 1), (1, 2)]},
+        "horcruxes": [(4, 3)],
+    },
+    {
+        "map": [
+            ['P', 'P', 'P', 'P', 'I'],
+            ['P', 'P', 'I', 'P', 'P'],
+            ['P', 'I', 'I', 'P', 'P'],
+            ['P', 'V', 'P', 'P', 'P'],
+        ],
+        "wizards": {"Harry Potter": ((0, 0), 2), "Ron Weasley": ((0, 1), 2)},
+        "death_eaters": {'death_eater1': [(0, 1), (1, 1)]},
+        "horcruxes": [(0, 3), (1, 3), (3, 0), (2, 4)],
+    },
     {
         "map": [
             ['P', 'P', 'P', 'P', 'I', 'I'],

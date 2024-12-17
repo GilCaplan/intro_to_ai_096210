@@ -66,14 +66,14 @@ def solve_problems(problems):
         timeout = 60
         result = check_problem(
             p, (lambda p: search.astar_search(p, p.h)), timeout)
-        print(f"{result[0]} {result[1]}, {result[2]}")
-        # print(f"{result[0]} {result[1]}")
+        # print(f"{result[0]} {result[1]}, {result[2]}")
+        print(f"{result[0]} {result[1]}")
         cnt += 1
         if result[2] != None:
             if result[0] != -3:
                 solved = solved + 1
 
-        visualize_solution(problem, result[2], use_ANSI=False)
+        # visualize_solution(problem, result[2], use_ANSI=False)
     return
 
 import time
@@ -139,6 +139,8 @@ def visualize_solution(init_state, solution, use_ANSI=False):
 
     # Process solution
     for action in solution:
+        if action is None:
+            return
         for atomic_action in action:
             action_name, *details = atomic_action
 
@@ -177,13 +179,14 @@ def visualize_solution(init_state, solution, use_ANSI=False):
 def main():
     print(ex1.ids)
     """Here goes the input you want to check"""
-    # print("Solving Non Complex Problems:")
-    # solve_problems(non_comp_problems)
+    print("Solving Non Complex Problems:")
+    solve_problems(non_comp_problems)
     print("Solving Complex Problems:")
     solve_problems(comp_problems)
+    # print("Solving Seva's Problems:")
     # solve_problems(s_problems)
-    # print("Solving Tal Problems:")
-    # solve_problems(t_hard_problems)
+    print("Solving Tal Problems:")
+    solve_problems(t_hard_problems)
     # print("Solving Check Problems:")
     # solve_problems(check_problems)
     print("done")
