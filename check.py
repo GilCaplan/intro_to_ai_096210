@@ -73,61 +73,60 @@ def solve_problems(problems):
             if result[0] != -3:
                 solved = solved + 1
 
-        # visualize_solution(problem, result[2], use_ANSI=False)
+        visualize_solution(problem, result[2], use_ANSI=False)
     return
 
-def visualize_solution(init_state, solution, use_ANSI=False):
-    symbols = {
-        'P': '⬜',
-        'I': '🟫',
-        'V': '🟥'
-    }
+import time
 
+def visualize_solution(init_state, solution, use_ANSI=False):
+    # Define symbols
+    symbols = {
+        'P': '⬜',  # Plain tile
+        'I': '🟫',  # Impassable tile
+        'V': '🟥'   # Voldemort tile
+    }
     wizard_symbol = '🧙'
     death_eater_symbol = '👻'
     horcrux_symbol = '🔥'
-    dead_symbol = '💀'
     harry_symbol = '🧙🏿'
 
     map = init_state['map']
     vx, vy = -1, -1
 
-    # Finding voldemort
+    # Find Voldemort's position
     for i in range(len(map)):
         for j in range(len(map[0])):
             if map[i][j] == 'V':
                 vx, vy = i, j
 
-    # Preparing state
-    horcruxes = {}
-    for i, horcrux in enumerate(init_state['horcruxes']):
-        if tuple(horcrux) not in horcruxes:
-            horcruxes[tuple(horcrux)] = [i]
-        else:
-            horcruxes[tuple(horcrux)].append(i)
-
+    # Prepare state
+    horcruxes = {tuple(h): True for h in init_state['horcruxes']}
     wizards = init_state['wizards']
     death_eaters = {name: [path, True, 0] for name, path in init_state['death_eaters'].items()}
+
+    # Function to print the current state
     def print_state():
         map_copy = [row[:] for row in map]
 
+        # Place death eaters
         for name, (path, right, index) in death_eaters.items():
             x, y = path[index]
-            map_copy[x][y] = death_eater_symbol  # Death Eater symbol
+            map_copy[x][y] = death_eater_symbol
 
-        for (x, y), _ in horcruxes.items():
-            map_copy[x][y] = horcrux_symbol  # Horcrux symbol
+        # Place horcruxes
+        for (x, y), active in horcruxes.items():
+            if active:
+                map_copy[x][y] = horcrux_symbol
 
+        # Place wizards
         for wizard, (position, _) in wizards.items():
             x, y = position
-            map_copy[x][y] = wizard_symbol
-
             if wizard == 'Harry Potter':
                 map_copy[x][y] = harry_symbol
+            else:
+                map_copy[x][y] = wizard_symbol
 
-        if symbols['V'] == dead_symbol:
-            map_copy[vx][vy] = dead_symbol
-
+        # Render the map
         if use_ANSI:
             print(f"\033[{len(map)}A", end="")
         else:
@@ -137,64 +136,49 @@ def visualize_solution(init_state, solution, use_ANSI=False):
             print(''.join(symbols.get(cell, cell) for cell in row))
 
     print_state()
-    # print(solution)
 
-    # Updating state
+    # Process solution
     for action in solution:
         for atomic_action in action:
-            action_name, details = atomic_action[0], atomic_action[1:]
+            action_name, *details = atomic_action
 
             if action_name == 'move':
                 wizard_name, (x, y) = details
                 _, lives = wizards[wizard_name]
                 wizards[wizard_name] = ((x, y), lives)
+
             elif action_name == 'destroy':
-                wizard_name, i = details
+                wizard_name, horcrux_index = details
                 (x, y), lives = wizards[wizard_name]
+                horcruxes[(x, y)] = False
 
-                horcruxes[(x, y)].remove(i)
-                if not horcruxes[(x, y)]:
-                    horcruxes.pop((x, y))
             elif action_name == 'kill':
-                symbols['V'] = dead_symbol
+                map[vx][vy] = symbols['V'] = '💀'
 
+        # Update death eater positions
         for name, (path, right, index) in death_eaters.items():
-            if len(path) != 1:
+            if len(path) > 1:
                 if right:
                     index += 1
-
-                    if index == (len(path)-1):
+                    if index == len(path) - 1:
                         right = False
                 else:
                     index -= 1
-
                     if index == 0:
                         right = True
-
             death_eaters[name] = (path, right, index)
-
-            x, y = path[index]
-
-            # I DO NOT LIKE THIS
-            for wizard_name, ((wx, wy), lives) in list(wizards.items()):
-                if (wx, wy) == (x, y):
-                    lives -= 1
-
-                    if lives == 0:
-                        raise Exception('DANGER WTF POPPED A WIZARD . . .')
-                    else:
-                        wizards[wizard_name] = ((x, y), lives)
 
         print(action)
         time.sleep(0.5)
         print_state()
 
 
+
 def main():
     print(ex1.ids)
     """Here goes the input you want to check"""
-    print("Solving Non Complex Problems:")
-    solve_problems(non_comp_problems)
+    # print("Solving Non Complex Problems:")
+    # solve_problems(non_comp_problems)
     print("Solving Complex Problems:")
     solve_problems(comp_problems)
     # solve_problems(s_problems)
