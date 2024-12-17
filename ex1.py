@@ -143,7 +143,8 @@ class HarryPotterProblem(search.Problem):
         for wizard in wizards:
             wiz_loc = wizards[wizard][0]
             is_safe = not any([wiz_loc == p[new_state['move_num'] % len(p)] \
-                               for p in self.death_eaters.values()])
+                               for p in self.death_eaters.values()]) and wizards[wizard][1] > 1
+            # check if wizard life > 1
             destroy_hocrox = get_destroy_horcrux_actions(wiz_loc, wizard)
             if len(destroy_hocrox) > 0 and is_safe:
                 actions.append(destroy_hocrox)
@@ -260,7 +261,7 @@ class HarryPotterProblem(search.Problem):
         for wiz_loc, distances in wizard_horcrux_distances:
             for dist, horcrux in distances:
                 if horcrux not in assigned_horcruxes:
-                    total_distance = max(total_distance, dist)
+                    total_distance += dist
                     assigned_horcruxes.add(horcrux)
                     break
 
@@ -283,8 +284,9 @@ class HarryPotterProblem(search.Problem):
         wiz_locs = tuple([(x, y) for wiz, [(x, y), _] in zip(wizards, wizards.values()) if wiz != "Harry Potter"])
         cost1 = self.compute_wizard_horcrux_distances(wiz_locs, horcrux_positions)
         wiz_locs = (tuple(wizards["Harry Potter"][0]),) + wiz_locs
-        cost2 = self.compute_wizard_horcrux_distances1(wiz_locs, horcrux_positions)
+        cost2 = self.compute_wizard_horcrux_distances(wiz_locs, horcrux_positions)
         x, y = wizards["Harry Potter"][0]
+        # return cost2
         return max(cost2, int(cost1) + self.shortest_dist_from_voldemort[x][y])
 
 def create_harrypotter_problem(game):
