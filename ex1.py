@@ -75,31 +75,6 @@ class HarryPotterProblem(search.Problem):
         initial_state = json.dumps(initial_state)
         search.Problem.__init__(self, initial_state)
 
-    @lru_cache(maxsize=None)
-    def compute_min_manhattan_distance(self, wizard_loc, horcrux_positions):
-        return min(abs(wizard_loc[0] - hx) + abs(wizard_loc[1] - hy) for hx, hy in horcrux_positions)
-
-    @lru_cache(maxsize=None)
-    def compute_max_manhattan_distance(self, wizard_loc, horcrux_positions):
-        return max(abs(wizard_loc[0] - hx) + abs(wizard_loc[1] - hy) for hx, hy in horcrux_positions)
-
-    @lru_cache(maxsize=None)
-    def compute_max_distance_voldermort(self, horcrux_positions):
-        if self.small_board and self.low_num_horcruxes:
-            return 0
-        return max([self.shortest_dist_from_voldemort[x][y] for x, y in horcrux_positions]) + 1
-
-    @lru_cache(maxsize=None)
-    def compute_min_distance(self, horcrux_positions):
-        return min([self.shortest_dist_from_voldemort[x][y] for x, y in horcrux_positions])
-
-    @lru_cache(maxsize=None)
-    def compute_distance_voldermort(self, horcrux_positions):
-        if self.small_board and self.low_num_horcruxes:
-            return 0
-        dists = [self.shortest_dist_from_voldemort[x][y] for x, y in horcrux_positions]
-        return sum(dists) / (len(horcrux_positions) + 1)
-
     def actions(self, state):
         """Return the valid actions that can be executed in the given state."""
         new_state = json.loads(state)
