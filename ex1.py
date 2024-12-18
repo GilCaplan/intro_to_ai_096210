@@ -137,17 +137,12 @@ class HarryPotterProblem(search.Problem):
                     actions.append(get_wait_actions(wizard))
 
             else:
-                if is_safe:
-                    actions.append(
-                        get_move_actions(wiz_loc, wizard, ) +
-                        destroy_hocrox +
-                        get_kill_voldemort_action(wiz_loc, wizard))
-                    continue
                 actions.append(
                     get_move_actions(wiz_loc, wizard, ) +
-                    destroy_hocrox +
-                    get_wait_actions(wizard) +
+                    destroy_hocrox+
                     get_kill_voldemort_action(wiz_loc, wizard))
+                if not is_safe:
+                    actions.extend(get_wait_actions(wizard))
         actions = tuple(itertools.product(*actions))
         return actions
 
