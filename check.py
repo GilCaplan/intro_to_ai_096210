@@ -63,11 +63,11 @@ def solve_problems(problems):
         except Exception as e:
             print("Error creating problem: ", e)
             return None
-        timeout = 60
+        timeout = 120
         result = check_problem(
             p, (lambda p: search.astar_search(p, p.h)), timeout)
-        # print(f"{result[0]} {result[1]}, {result[2]}")
-        print(f"{result[0]} {result[1]}")
+        print(f"{result[0]} {result[1]}, {result[2]}")
+        # print(f"{result[0]} {result[1]}")
         cnt += 1
         if result[2] != None:
             if result[0] != -3:
@@ -179,14 +179,14 @@ def visualize_solution(init_state, solution, use_ANSI=False):
 def main():
     print(ex1.ids)
     """Here goes the input you want to check"""
-    print("Solving Non Complex Problems:")
-    solve_problems(non_comp_problems)
+    # print("Solving Non Complex Problems:")
+    # solve_problems(non_comp_problems)
     print("Solving Complex Problems:")
     solve_problems(comp_problems)
     # print("Solving Seva's Problems:")
     # solve_problems(s_problems)
-    print("Solving Tal Problems:")
-    solve_problems(t_hard_problems)
+    # print("Solving Tal Problems:")
+    # solve_problems(t_hard_problems)
     # print("Solving Check Problems:")
     # solve_problems(check_problems)
     print("done")

@@ -65,6 +65,7 @@ class HarryPotterProblem(search.Problem):
             'horcruxes_destroyed': sys.maxsize,
             'voldemort_killed': False,
         }
+        self.prev_moves = {(x, y): i for i, ((x, y), _) in enumerate(initial_state['horcruxes'].values())}
         self.low_num_horcruxes = len(initial_state['horcruxes']) < 4
         self.small_board = len(self.map) * len(self.map[0]) < 21
         self.voldemort_loc = next(
@@ -146,7 +147,7 @@ class HarryPotterProblem(search.Problem):
                                for p in self.death_eaters.values()])
             destroy_hocrox = get_destroy_horcrux_actions(wiz_loc, wizard)
             if len(destroy_hocrox) > 0 and is_safe:
-                actions.append(destroy_hocrox)
+                actions.append(destroy_hocrox + get_move_actions(wiz_loc, wizard))
             elif remaining_horcruxes == 0 and is_safe:
                 if wizard == 'Harry Potter':
                     if self.voldemort_loc == wiz_loc:
@@ -239,33 +240,6 @@ class HarryPotterProblem(search.Problem):
 
         return total_distance
 
-    @lru_cache(maxsize=None)
-    def compute_wizard_horcrux_distances1(self, wizard_locations, horcrux_positions):
-        if not horcrux_positions or not wizard_locations:
-            return 0
-
-        wizard_horcrux_distances = []
-        for wiz_loc in wizard_locations:
-            distances = sorted(
-                [(abs(wiz_loc[0] - horcrux[0]) + abs(wiz_loc[1] - horcrux[1]), horcrux) for horcrux in
-                 horcrux_positions],
-                key=lambda x: x[0]
-            )
-            wizard_horcrux_distances.append((wiz_loc, distances))
-
-        wizard_horcrux_distances.sort(key=lambda x: x[1][0][0], reverse=True)
-        total_distance = 0
-        assigned_horcruxes = set()
-
-        for wiz_loc, distances in wizard_horcrux_distances:
-            for dist, horcrux in distances:
-                if horcrux not in assigned_horcruxes:
-                    total_distance = max(total_distance, dist)
-                    assigned_horcruxes.add(horcrux)
-                    break
-
-        return total_distance
-
     def h(self, node):
         """
         Heuristic function for A* search.
@@ -280,12 +254,14 @@ class HarryPotterProblem(search.Problem):
             return float('inf')
 
         horcrux_positions = tuple([(x, y) for [(x, y), h] in horcruxes.values() if not h])
-        wiz_locs = tuple([(x, y) for wiz, [(x, y), _] in zip(wizards, wizards.values()) if wiz != "Harry Potter"])
+        wiz_locs = tuple([(x, y) for wiz, [(x, y), _] in zip(wizards, wizards.values()) ])
         cost1 = self.compute_wizard_horcrux_distances(wiz_locs, horcrux_positions)
         wiz_locs = (tuple(wizards["Harry Potter"][0]),) + wiz_locs
-        cost2 = self.compute_wizard_horcrux_distances1(wiz_locs, horcrux_positions)
+        # cost2 = self.compute_wizard_horcrux_distances(wiz_locs, horcrux_positions)
         x, y = wizards["Harry Potter"][0]
-        return max(cost2, int(cost1) + self.shortest_dist_from_voldemort[x][y])
+        if len(horcrux_positions) < 2:
+            return self.shortest_dist_from_voldemort[x][y]
+        return cost1
 
 def create_harrypotter_problem(game):
     return HarryPotterProblem(game)
