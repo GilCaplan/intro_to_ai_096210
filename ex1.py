@@ -229,14 +229,12 @@ class HarryPotterProblem(search.Problem):
             return float('inf')
 
         horcrux_positions = tuple([(x, y) for [(x, y), h] in horcruxes.values() if not h])
-        wiz_locs = tuple([(x, y) for wiz, [(x, y), _] in zip(wizards, wizards.values()) ])
-        cost1 = self.compute_wizard_horcrux_distances(wiz_locs, horcrux_positions)
-        wiz_locs = (tuple(wizards["Harry Potter"][0]),) + wiz_locs
-        # cost2 = self.compute_wizard_horcrux_distances(wiz_locs, horcrux_positions)
         x, y = wizards["Harry Potter"][0]
         if len(horcrux_positions) < 2:
             return self.shortest_dist_from_voldemort[x][y]
-        return cost1
+
+        wiz_locs = tuple([(x, y) for wiz, [(x, y), _] in zip(wizards, wizards.values())])
+        return self.compute_wizard_horcrux_distances(wiz_locs, horcrux_positions)
 
 def create_harrypotter_problem(game):
     return HarryPotterProblem(game)
