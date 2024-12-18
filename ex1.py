@@ -5,6 +5,7 @@ from collections import deque
 from functools import lru_cache
 import search
 import heapq
+import random
 
 ids = ["111111111", "111111111"]
 
@@ -130,12 +131,18 @@ class HarryPotterProblem(search.Problem):
                         continue
                     actions.append(
                         get_move_actions(wiz_loc, wizard, ) +
-                        get_kill_voldemort_action(wiz_loc, wizard) +
-                        get_wait_actions(wizard)
+                        get_kill_voldemort_action(wiz_loc, wizard)
                     )
                 else:
                     actions.append(get_wait_actions(wizard))
+
             else:
+                if is_safe:
+                    actions.append(
+                        get_move_actions(wiz_loc, wizard, ) +
+                        destroy_hocrox +
+                        get_kill_voldemort_action(wiz_loc, wizard))
+                    continue
                 actions.append(
                     get_move_actions(wiz_loc, wizard, ) +
                     destroy_hocrox +
@@ -182,21 +189,9 @@ class HarryPotterProblem(search.Problem):
 
     @lru_cache(maxsize=None)
     def compute_wizard_horcrux_distances(self, wizard_locations, horcrux_positions):
-        """
-        Compute greedy assignment of wizards to horcruxes by iteratively matching
-        each wizard to their closest unassigned horcrux.
-
-        Args:
-            wizard_locations: List of (x, y) tuples representing the wizard positions.
-            horcrux_positions: List of (x, y) tuples representing the horcrux positions.
-        Returns:
-            float: Sum of assigned distances.
-        """
-
         if len(horcrux_positions) == 0 or not wizard_locations:
             return 0
 
-        # Create a heap of (distance, wizard_location, horcrux_position)
         available_horcruxes = []
         for wiz_loc in wizard_locations:
             for horcrux_pos in horcrux_positions:
@@ -235,6 +230,7 @@ class HarryPotterProblem(search.Problem):
 
         wiz_locs = tuple([(x, y) for wiz, [(x, y), _] in zip(wizards, wizards.values())])
         return self.compute_wizard_horcrux_distances(wiz_locs, horcrux_positions)
+
 
 def create_harrypotter_problem(game):
     return HarryPotterProblem(game)
