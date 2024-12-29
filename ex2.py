@@ -60,7 +60,7 @@ class GringottsController:
                 adjacent.append((new_y, new_x))
         return adjacent
 
-    def _find_quick_path(self, target: Tuple[int, int]) -> List[Tuple[int, int]]:
+    def _find_quick_path_bfs(self, target: Tuple[int, int]) -> List[Tuple[int, int]]:
         """Find a quick path to target using BFS"""
         if target == self.harry_loc:
             return []
@@ -82,6 +82,31 @@ class GringottsController:
                     queue.append((next_pos, path + [next_pos]))
 
         return []
+
+    def _find_quick_path_dfs(self, target: Tuple[int, int]) -> List[Tuple[int, int]]:
+        """Find a path to target using DFS"""
+        if target == self.harry_loc:
+            return []
+
+        def dfs(pos: Tuple[int, int], visited: Set[Tuple[int, int]], path: List[Tuple[int, int]]) -> List[
+            Tuple[int, int]]:
+            if pos == target:
+                return path
+
+            for next_pos in self._get_adjacent_tiles(*pos):
+                if (next_pos not in visited and
+                        next_pos not in self.known_dragons and
+                        (next_pos in self.known_safe or next_pos == target)):
+                    visited.add(next_pos)
+                    result = dfs(next_pos, visited, path + [next_pos])
+                    if result:  # If path is found, return it
+                        return result
+                    visited.remove(next_pos)  # Backtrack
+
+            return []  # No path found from this position
+
+        visited = {self.harry_loc}
+        return dfs(self.harry_loc, visited, [])
 
     def get_next_action(self, observations: List[Tuple]) -> Tuple:
         """Determine next action with focus on minimizing turns"""
@@ -106,7 +131,7 @@ class GringottsController:
 
         # If we have a vault in sight, go there directly
         if self.nearest_vault and self.nearest_vault not in self.checked_vaults:
-            path = self._find_quick_path(self.nearest_vault)
+            path = self._find_quick_path_bfs(self.nearest_vault)
             if path:
                 next_pos = path[0]
                 self.harry_loc = next_pos
