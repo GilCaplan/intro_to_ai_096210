@@ -117,6 +117,10 @@ class GringottsController:
             # check could be faulty cause of destroyed traps being updated
             if any((adj in self.known_safe for adj in adjacent)):
                     new_safe.add((y, x))
+            # Rule 2: If trap destroyed, mark adjacent tiles safe
+            for adj in adjacent:
+                if adj not in self.potential_traps and adj not in self.known_dragons:
+                    new_safe.add(adj)
 
         # Rule 3: No Sulfur Rule
         for (y, x) in self.known_safe:
