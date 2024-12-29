@@ -102,14 +102,14 @@ def generate_examples(num_boards, difficulty_level):
     examples = []
     for _ in range(num_boards):
         # Randomly select board size between 3x3 to 6x6 for level 1, 4x4 to 6x6 for level 2 and 3
-        rows = random.randint(3, 5) if difficulty_level == 1 else random.randint(4, 6)
-        cols = random.randint(3, 5) if difficulty_level == 1 else random.randint(4, 6)
+        rows = random.randint(4, 6) if difficulty_level == 1 else random.randint(4, 6)
+        cols = random.randint(4, 6) if difficulty_level == 1 else random.randint(4, 6)
 
         # Difficulty Level 1: No dragons, 3 vaults (1 Deathly Hallow), 4 traps
         if difficulty_level == 1:
-            num_dragons = 0
+            num_dragons = 1
             num_vaults = 2
-            num_traps = 2
+            num_traps = 3
             deathly_hallow = True
 
         # Difficulty Level 2: 1 to 4 dragons, 3 vaults (1 Deathly Hallow), 4 traps
@@ -138,7 +138,7 @@ def generate_examples(num_boards, difficulty_level):
     return examples
 
 # Generate 5 new boards for each difficulty level
-level_1_boards = generate_examples(5, 1)
+level_1_boards = generate_examples(10, 1)
 level_2_boards = generate_examples(5, 2)
 level_3_boards = generate_examples(5, 3)
 
