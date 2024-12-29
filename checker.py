@@ -174,6 +174,6 @@ class GringottsChecker(Checker):
 
 if __name__ == '__main__':
     print(ex2.ids)
-    for number, input in enumerate(inputs.inputs2):
+    for number, input in enumerate(inputs.inputs + inputs.inputs2):
         my_checker = GringottsChecker(input)
         print(f"Output on input number {number + 1}: {my_checker.check_controller()}\n")
