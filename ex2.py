@@ -96,8 +96,48 @@ class GringottsController:
 
         return nearest_vault, shortest_path
 
+    def _logical_inference(self):
+        """Apply logical rules to deduce new knowledge."""
+        # return
+        new_safe = self.known_safe.copy()
+        new_traps = self.potential_traps.copy()
+
+        # Process potential traps and sulfur detection
+        for (y, x) in self.potential_traps:
+            adjacent = self._get_adjacent_tiles(y, x)
+
+            # Rule 1: If sulfur detected, infer traps
+            if any((adj in self.known_safe for adj in adjacent)):
+                continue  # Skip if any adjacent tiles are already safe
+
+            if any((adj in self.potential_traps and adj not in self.known_safe for adj in adjacent)):
+                new_traps.add((y, x))
+
+
+            # check could be faulty cause of destroyed traps being updated
+            if any((adj in self.known_safe for adj in adjacent)):
+                    new_safe.add((y, x))
+            # Rule 2: If trap destroyed, mark adjacent tiles safe
+            for adj in adjacent:
+                if adj not in self.potential_traps and adj not in self.known_dragons:
+                    new_safe.add(adj)
+
+        # Rule 3: No Sulfur Rule
+        for (y, x) in self.known_safe:
+            adjacent = self._get_adjacent_tiles(y, x)
+            for adj in adjacent:
+                if adj in self.potential_traps and (y, x) not in self.potential_traps:
+                    new_safe.add(adj)
+
+
+        self.known_safe.update(new_safe)
+        self.potential_traps.difference_update(new_safe)
+        self.potential_traps.update(new_traps)
+
     def get_next_action(self, observations):
+        """Determine next action with focus on minimizing turns."""
         self._process_observations(observations)
+        self._logical_inference()  # Apply logical inference to refine knowledge
 
         # Check if Harry is at a vault
         if self.harry_loc in self.known_vaults and self.harry_loc not in self.checked_vaults:
@@ -127,3 +167,4 @@ class GringottsController:
 
         # No better actions
         return ("wait",)
+
