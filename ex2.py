@@ -1,6 +1,7 @@
 from collections import deque
 import heapq
 ids = ['208237479', '208237479']
+
 class GringottsController:
     def __init__(self, map_shape, harry_loc, initial_observations):
         self.map_shape = map_shape
@@ -32,7 +33,7 @@ class GringottsController:
 
         if has_sulfur:
             for tile in adjacent:
-                if tile not in self.known_safe and tile not in self.known_dragons:
+                if tile not in set(self.known_safe).union(self.known_dragons):
                     self.potential_traps.add(tile)
         else:
             for tile in adjacent:
@@ -96,61 +97,14 @@ class GringottsController:
 
         return nearest_vault, shortest_path
 
-    def _logical_inference(self):
-        """Apply logical rules to deduce new knowledge."""
-        # return
-        new_safe = self.known_safe.copy()
-        new_traps = self.potential_traps.copy()
-
-        # Process potential traps and sulfur detection
-        for (y, x) in self.potential_traps:
-            adjacent = self._get_adjacent_tiles(y, x)
-
-            # Rule 1: If sulfur detected, infer traps
-            if any((adj in self.known_safe for adj in adjacent)):
-                continue  # Skip if any adjacent tiles are already safe
-
-            if any((adj in self.potential_traps and adj not in self.known_safe for adj in adjacent)):
-                new_traps.add((y, x))
-
-
-            # check could be faulty cause of destroyed traps being updated
-            if any((adj in self.known_safe for adj in adjacent)):
-                    new_safe.add((y, x))
-            # Rule 2: If trap destroyed, mark adjacent tiles safe
-            for adj in adjacent:
-                if adj not in self.potential_traps and adj not in self.known_dragons:
-                    new_safe.add(adj)
-
-        # Rule 3: No Sulfur Rule
-        for (y, x) in self.known_safe:
-            adjacent = self._get_adjacent_tiles(y, x)
-            for adj in adjacent:
-                if adj in self.potential_traps and (y, x) not in self.potential_traps:
-                    new_safe.add(adj)
-
-
-        self.known_safe.update(new_safe)
-        self.potential_traps.difference_update(new_safe)
-        self.potential_traps.update(new_traps)
-
     def get_next_action(self, observations):
         """Determine next action with focus on minimizing turns."""
         self._process_observations(observations)
-        self._logical_inference()  # Apply logical inference to refine knowledge
 
-        # Check if Harry is at a vault
         if self.harry_loc in self.known_vaults and self.harry_loc not in self.checked_vaults:
             self.checked_vaults.add(self.harry_loc)
             return ("collect",)
 
-        # Handle traps
-        adjacent = self._get_adjacent_tiles(*self.harry_loc)
-        for adj in adjacent:
-            if adj in self.potential_traps:
-                return ("destroy", adj)
-
-        # Find nearest vault
         nearest_vault, path = self._find_nearest_vault()
         if path:
             next_move = path[0]
@@ -158,7 +112,11 @@ class GringottsController:
             self.visited.add(next_move)
             return ("move", next_move)
 
-        # Explore
+        adjacent = self._get_adjacent_tiles(*self.harry_loc)
+        for adj in adjacent:
+            if adj in self.potential_traps:
+                return ("destroy", adj)
+
         for adj in adjacent:
             if adj not in self.visited and adj not in self.known_dragons and adj not in self.potential_traps:
                 self.harry_loc = adj
