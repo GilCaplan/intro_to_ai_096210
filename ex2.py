@@ -115,6 +115,8 @@ class GringottsController:
         adjacent = self._get_adjacent_tiles(*self.harry_loc)
         for adj in adjacent:
             if adj in self.potential_traps:
+                self.potential_traps.remove(adj)
+                self.known_safe.add(adj)
                 return ("destroy", adj)
 
         for adj in adjacent:
