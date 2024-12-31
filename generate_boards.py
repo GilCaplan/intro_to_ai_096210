@@ -135,5 +135,5 @@ def print_boards(boards, level):
         print("},\n")
 
 print_boards(level_1_boards, 1)
-# print_boards(level_2_boards, 2)
-# print_boards(level_3_boards, 3)
+print_boards(level_2_boards, 2)
+print_boards(level_3_boards, 3)

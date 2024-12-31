@@ -203,7 +203,7 @@ inputlv2 = [
 {
     'Level': 2,
     'Board': 1,
-    'Harry_start': (0, 0),
+    'Harry_start': (0, 3),
     'full_map': [
         [5, 3, 0, 0],
         [0, 5, 0, 0],
