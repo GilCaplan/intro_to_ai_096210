@@ -58,7 +58,7 @@ class GringottsChecker(Checker):
         n = len(self.game_map[0])
         self.turn_limit = 5 + 3 * (n + m)
         self.collected_hollow = False
-        print(f"Maximal amount of turns is {self.turn_limit}!")
+        # print(f"Maximal amount of turns is {self.turn_limit}!")
 
     def check_controller(self):
         map_dimensions = (len(self.game_map), len(self.game_map[0]))
@@ -76,15 +76,18 @@ class GringottsChecker(Checker):
             start = time.time()
             action = controller.get_next_action(observations)
             finish = time.time()
-            # if finish - start > ACTION_TIMEOUT:
-            #     return f"Timeout on action! Took {finish - start} seconds, should take no more than {ACTION_TIMEOUT}"
+            if finish - start > ACTION_TIMEOUT:
+                return f"Timeout on action! Took {finish - start} seconds, should take no more than {ACTION_TIMEOUT}"
             if not self.is_action_legal(action):
                 return f"Action {action} is illegal! Either because the action is impossible or because Harry dies"
             counter += 1
             if counter > self.turn_limit:
-                return "Turn limit exceeded!"
+                return 0
+                # return "Turn limit exceeded!"
             self.change_state_after_action(action)
-        return f"Goal achieved in {counter} steps!"
+        return f"{counter} < {self.turn_limit}"
+        # return f"{counter}
+        # return f"Goal achieved in {counter} steps!"
 
     def create_state(self):
         return self.harry_cur_loc
@@ -176,9 +179,23 @@ if __name__ == '__main__':
     # print(ex2.ids)
     for number, input in enumerate(inputs.inputs):
         my_checker = GringottsChecker(input)
-        print(f"Output on input number {number + 1}: {my_checker.check_controller()}\n")
+        print(my_checker.check_controller())
+        # print(f"Output on input number {number + 1}: {my_checker.check_controller()}\n")
 
     print("\n----------------level one tests:----------------\n")
     for number, input in enumerate(inputs.inputlv1):
         my_checker = GringottsChecker(input)
-        print(f"Output on input number {number + 1}: {my_checker.check_controller()}\n")
+        print(my_checker.check_controller())
+        # print(f"Output on input number {number + 1}: {my_checker.check_controller()}\n")
+
+    print("\n----------------level two tests:----------------\n")
+    for number, input in enumerate(inputs.inputlv2):
+        my_checker = GringottsChecker(input)
+        print(my_checker.check_controller())
+        # print(f"Output on input number {number + 1}: {my_checker.check_controller()}\n")
+
+    print("\n----------------level three tests:----------------\n")
+    for number, input in enumerate(inputs.inputlv3):
+        my_checker = GringottsChecker(input)
+        print(my_checker.check_controller())
+        # print(f"Output on input number {number + 1}: {my_checker.check_controller()}\n")

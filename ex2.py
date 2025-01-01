@@ -124,7 +124,7 @@ class GringottsController:
                 self.harry_loc = adj
                 self.visited.add(adj)
                 return ("move", adj)
-
+        # anything to add here
         # No better actions
         return ("wait",)
 
