@@ -13,6 +13,7 @@ class GringottsController:
         self.known_vaults = set()
         self.potential_traps = set()
         self.visited = {harry_loc}
+        self.path = [harry_loc]
         self.checked_vaults = set()
 
         # Process initial observations
@@ -90,7 +91,7 @@ class GringottsController:
         shortest_path = []
 
         for vault in self.known_vaults - self.checked_vaults:
-            path = self._bfs(self.harry_loc, vault)
+            path = self._astar(self.harry_loc, vault)
             if not shortest_path or (path and len(path) < len(shortest_path)):
                 nearest_vault = vault
                 shortest_path = path
@@ -100,7 +101,6 @@ class GringottsController:
     def get_next_action(self, observations):
         """Determine next action with focus on minimizing turns."""
         self._process_observations(observations)
-
         if self.harry_loc in self.known_vaults and self.harry_loc not in self.checked_vaults:
             self.checked_vaults.add(self.harry_loc)
             return ("collect",)
@@ -108,23 +108,40 @@ class GringottsController:
         nearest_vault, path = self._find_nearest_vault()
         if path:
             next_move = path[0]
-            self.harry_loc = next_move
-            self.visited.add(next_move)
-            return ("move", next_move)
+            if next_move not in self.visited.union(self.known_dragons):
+                self.harry_loc = next_move
+                self.visited.add(next_move)
+                self.path.append(next_move)
+                return "move", next_move
 
-        adjacent = self._get_adjacent_tiles(*self.harry_loc)
+        adjacent = sorted(self._get_adjacent_tiles(*self.harry_loc), key=lambda loc: loc not in self.known_vaults)
         for adj in adjacent:
             if adj in self.potential_traps:
-                self.potential_traps.remove(adj)
+                self.potential_traps.discard(adj)
                 self.known_safe.add(adj)
-                return ("destroy", adj)
+                return "destroy", adj
 
         for adj in adjacent:
-            if adj not in self.visited and adj not in self.known_dragons and adj not in self.potential_traps:
+            if adj not in self.visited.union(self.known_dragons.union(self.potential_traps)):
                 self.harry_loc = adj
                 self.visited.add(adj)
-                return ("move", adj)
-        # anything to add here
-        # No better actions
-        return ("wait",)
+                self.path.append(adj)
+                return "move", adj
 
+        if len(self.path) > 1:
+            for i in range(len(self.path) - 1, -1, -1):
+                current_pos = self.path[i]
+                adjacent = self._get_adjacent_tiles(*current_pos)
+
+                for adj in adjacent:
+                    if adj not in self.visited.union(self.known_dragons.union(self.potential_traps)):
+                        path_to_pos = self._astar(self.harry_loc, current_pos)
+                        if path_to_pos:
+                            next_move = path_to_pos[0]
+                            self.harry_loc = next_move
+                            self.path.append(next_move)
+                            return "move", next_move
+
+        # If no backtracking options found, wait
+        print("stuck")
+        return ("wait",)

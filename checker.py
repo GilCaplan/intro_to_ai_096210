@@ -1,4 +1,5 @@
 
+# import ex2_dpll as ex2
 import ex2
 import time
 import inputs
@@ -85,8 +86,8 @@ class GringottsChecker(Checker):
                 return 0
                 # return "Turn limit exceeded!"
             self.change_state_after_action(action)
-        return f"{counter} < {self.turn_limit}"
-        # return f"{counter}
+        # return f"{counter} < {self.turn_limit}"
+        return f"{counter}"
         # return f"Goal achieved in {counter} steps!"
 
     def create_state(self):
@@ -177,12 +178,12 @@ class GringottsChecker(Checker):
 
 if __name__ == '__main__':
     # print(ex2.ids)
-    for number, input in enumerate(inputs.inputs):
-        my_checker = GringottsChecker(input)
-        print(my_checker.check_controller())
+    # for number, input in enumerate(inputs.inputs):
+    #     my_checker = GringottsChecker(input)
+    #     print(my_checker.check_controller())
         # print(f"Output on input number {number + 1}: {my_checker.check_controller()}\n")
 
-    print("\n----------------level one tests:----------------\n")
+    # print("\n----------------level one tests:----------------\n")
     for number, input in enumerate(inputs.inputlv1):
         my_checker = GringottsChecker(input)
         print(my_checker.check_controller())
@@ -194,7 +195,7 @@ if __name__ == '__main__':
         print(my_checker.check_controller())
         # print(f"Output on input number {number + 1}: {my_checker.check_controller()}\n")
 
-    print("\n----------------level three tests:----------------\n")
+    # print("\n----------------level three tests:----------------\n")
     for number, input in enumerate(inputs.inputlv3):
         my_checker = GringottsChecker(input)
         print(my_checker.check_controller())
