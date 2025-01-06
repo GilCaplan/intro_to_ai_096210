@@ -3,6 +3,8 @@
 import ex2
 import time
 import inputs
+from copy import deepcopy
+
 
 CODES_NEW = {'passage': 0, 'dragon': 1, 'vault': 2, 'trap': 3, 'hollow_vault': 4, 'vault_trap': 5, 'dragon_trap': 6,
              'hollow_trap_vault': 7}
@@ -78,9 +80,11 @@ class GringottsChecker(Checker):
             action = controller.get_next_action(observations)
             finish = time.time()
             if finish - start > ACTION_TIMEOUT:
-                return f"Timeout on action! Took {finish - start} seconds, should take no more than {ACTION_TIMEOUT}"
+                return -1
+                # return f"Timeout on action! Took {finish - start} seconds, should take no more than {ACTION_TIMEOUT}"
             if not self.is_action_legal(action):
-                return f"Action {action} is illegal! Either because the action is impossible or because Harry dies"
+                return -1
+                # return f"Action {action} is illegal! Either because the action is impossible or because Harry dies"
             counter += 1
             if counter > self.turn_limit:
                 return 0
@@ -177,26 +181,58 @@ class GringottsChecker(Checker):
 
 
 if __name__ == '__main__':
+
+    def check_board(input, i):
+        grid = input['full_map']
+        # Transpose the grid
+        gridT = [list(row) for row in zip(*grid)]
+
+        # Collect valid locations from original and transposed grids
+        locs = [(r, c) for r in range(len(grid)) for c in range(len(grid[0])) if grid[r][c] == 0]
+        locsT = [(r, c) for r in range(len(gridT)) for c in range(len(gridT[0])) if gridT[r][c] == 0]
+
+        # Test on original grid
+        for loc in locs:
+            test_input = deepcopy(input)  # Preserve original input dictionary
+            test_input['Harry_loc'] = loc
+            test_input['full_map'] = grid
+            my_checker = GringottsChecker(test_input).check_controller()
+            total[i] += 1
+            if int(my_checker) > 0:
+                cnt[i] += 1
+
+        # Test on transposed grid
+        for loc in locsT:
+            test_input = deepcopy(input)  # Preserve original input dictionary
+            test_input['Harry_loc'] = loc
+            test_input['full_map'] = deepcopy(gridT)  # Use deepcopy for the transposed grid
+            my_checker = GringottsChecker(test_input).check_controller()
+            total[i] += 1
+            if int(my_checker) > 0:
+                cnt[i] += 1
+
+
     # print(ex2.ids)
-    # for number, input in enumerate(inputs.inputs):
-    #     my_checker = GringottsChecker(input)
-    #     print(my_checker.check_controller())
-        # print(f"Output on input number {number + 1}: {my_checker.check_controller()}\n")
+    cnt = [0, 0, 0, 0] # TA examples, lv1, lv2, lv3
+    total = [0, 0, 0, 0]
 
+    for number, input in enumerate(inputs.inputs):
+        # my_checker = GringottsChecker(input)
+        # print(my_checker.check_controller())
+        check_board(input, 0)
     # print("\n----------------level one tests:----------------\n")
-    for number, input in enumerate(inputs.inputlv1):
-        my_checker = GringottsChecker(input)
-        print(my_checker.check_controller())
-        # print(f"Output on input number {number + 1}: {my_checker.check_controller()}\n")
+    for number, input in enumerate(inputs.inputlv1_960210 + inputs.inputlv1_42 + inputs.inputlv1_69):
+        check_board(input, 1)
 
-    print("\n----------------level two tests:----------------\n")
-    for number, input in enumerate(inputs.inputlv2):
-        my_checker = GringottsChecker(input)
-        print(my_checker.check_controller())
-        # print(f"Output on input number {number + 1}: {my_checker.check_controller()}\n")
+    # print("\n----------------level two tests:----------------\n")
+    for number, input in enumerate(inputs.inputlv2_960210 + inputs.inputlv2_42 + inputs.inputlv2_69):
+        check_board(input, 2)
 
     # print("\n----------------level three tests:----------------\n")
-    for number, input in enumerate(inputs.inputlv3):
-        my_checker = GringottsChecker(input)
-        print(my_checker.check_controller())
-        # print(f"Output on input number {number + 1}: {my_checker.check_controller()}\n")
+    for number, input in enumerate(inputs.inputlv3_960210 + inputs.inputlv3_42 + inputs.inputlv3_69):
+        check_board(input, 3)
+    results = [(c, t, round(c / t, 3)) for c, t in zip(cnt, total)]
+    print("passed, total number, Percent of boards passed")
+    # print("TA boards ")
+    print(results)
+

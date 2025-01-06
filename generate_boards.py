@@ -10,7 +10,9 @@ CODES_NEW = {
     'dragon_trap': 6,
     'hollow_trap_vault': 7
 }
-random.seed(69)
+SEED = 960210
+random.seed(SEED)
+
 
 def generate_board(rows, cols, num_dragons, num_vaults, num_traps, deathly_hallow=True):
     board = [[CODES_NEW['passage'] for _ in range(cols)] for _ in range(rows)]
@@ -170,10 +172,10 @@ def print_boards(boards, level):
         print("},\n")
 
 
-print("inputlv1 = [")
+print(f"inputlv1_{SEED} = [")
 print_boards(level_1_boards, 1)
-print("]\ninputlv2 = [")
+print(f"]\ninputlv2_{SEED} = [")
 print_boards(level_2_boards, 2)
-print("]\ninputlv3 = [")
+print(f"]\ninputlv3_{SEED} = [")
 print_boards(level_3_boards, 3)
 print("]")

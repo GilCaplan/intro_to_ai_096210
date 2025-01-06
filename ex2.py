@@ -143,5 +143,5 @@ class GringottsController:
                             return "move", next_move
 
         # If no backtracking options found, wait
-        print("stuck")
+        # print("stuck")
         return ("wait",)
