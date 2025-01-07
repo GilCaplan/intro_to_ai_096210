@@ -143,30 +143,43 @@ class GringottsController:
                 self.known_safe.add(adj)
                 return "destroy", adj
 
-        # for adj in adjacent:
-        #     if adj not in self.visited.union(self.known_dragons.union(self.potential_traps)):
-        #         self.harry_loc = adj
-        #         self.visited.add(adj)
-        #         self.path.append(adj)
-        #         return "move", adj
-        # When choosing next move:
-        scored_moves = []
         for adj in adjacent:
             if adj not in self.visited.union(self.known_dragons.union(self.potential_traps)):
-                score = self._evaluate_move_potential(adj)
-                scored_moves.append((score, adj))
+                self.harry_loc = adj
+                self.visited.add(adj)
+                self.path.append(adj)
+                return "move", adj
+        # When choosing next move:
+        # scored_moves = []
+        # for adj in adjacent:
+        #     if adj not in self.visited.union(self.known_dragons.union(self.potential_traps)):
+        #         score = self._evaluate_move_potential(adj)
+        #         scored_moves.append((score, adj))
+        #
+        # if scored_moves:
+        #     best_move = max(scored_moves, key=lambda x: x[0])[1]
+        #     self.harry_loc = best_move
+        #     self.visited.add(best_move)
+        #     self.path.append(best_move)
+        #     return "move", best_move
 
-        if scored_moves:
-            best_move = max(scored_moves, key=lambda x: x[0])[1]
-            self.harry_loc = best_move
-            self.visited.add(best_move)
-            self.path.append(best_move)
-            return "move", best_move
+        if len(self.path) > 1:
+            for i in range(len(self.path) - 1, -1, -1):
+                current_pos = self.path[i]
+                adjacent = self._get_adjacent_tiles(*current_pos)
 
+                for adj in adjacent:
+                    if adj not in self.visited.union(self.known_dragons.union(self.potential_traps)):
+                        path_to_pos = self._astar(self.harry_loc, current_pos)
+                        if path_to_pos:
+                            next_move = path_to_pos[0]
+                            self.harry_loc = next_move
+                            self.path.append(next_move)
+                            return "move", next_move
 
         return ("wait",)
 
-    def _evaluate_move_potential(self, pos, depth=2):
+    def _evaluate_move_potential(self, pos, depth=3):
         visited = {pos}
         unexplored = set()
 
