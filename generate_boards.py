@@ -10,7 +10,7 @@ CODES_NEW = {
     'dragon_trap': 6,
     'hollow_trap_vault': 7
 }
-SEED = 960210
+SEED = 31415926
 random.seed(SEED)
 
 
@@ -124,8 +124,8 @@ def generate_board(rows, cols, num_dragons, num_vaults, num_traps, deathly_hallo
 def generate_examples(num_boards, difficulty_level):
     examples = []
     for _ in range(num_boards):
-        rows = random.randint(4, 6)
-        cols = random.randint(4, 6)
+        rows = random.randint(5, 9)
+        cols = random.randint(5, 9)
 
         if difficulty_level == 1:
             num_dragons = 1
@@ -135,12 +135,12 @@ def generate_examples(num_boards, difficulty_level):
         elif difficulty_level == 2:
             num_dragons = random.randint(1, 4)
             num_vaults = 3
-            num_traps = 4
+            num_traps = random.randint(3, 8)
             deathly_hallow = True
         elif difficulty_level == 3:
-            num_dragons = random.randint(1, 4)
-            num_vaults = random.randint(3, 5)
-            num_traps = random.randint(4, 6)
+            num_dragons = random.randint(2, 6)
+            num_vaults = random.randint(3, 6)
+            num_traps = random.randint(6, 15)
             deathly_hallow = True
 
         try:
@@ -155,9 +155,9 @@ def generate_examples(num_boards, difficulty_level):
 
     return examples
 
-level_1_boards = generate_examples(10, 1)
-level_2_boards = generate_examples(5, 2)
-level_3_boards = generate_examples(5, 3)
+level_1_boards = generate_examples(50, 1)
+level_2_boards = generate_examples(35, 2)
+level_3_boards = generate_examples(40, 3)
 
 def print_boards(boards, level):
     for idx, board in enumerate(boards):

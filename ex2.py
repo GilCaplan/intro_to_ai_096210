@@ -6,8 +6,6 @@ class GringottsController:
     def __init__(self, map_shape, harry_loc, initial_observations):
         self.map_shape = map_shape
         self.harry_loc = harry_loc
-
-        # Knowledge base
         self.known_safe = {harry_loc}
         self.known_dragons = set()
         self.known_vaults = set()
@@ -16,8 +14,32 @@ class GringottsController:
         self.path = [harry_loc]
         self.checked_vaults = set()
 
+        self.current_zone = None
+        self.zone_entry_turns = 0
+
+        # Define map zones
+        mid_y, mid_x = map_shape[0] // 2, map_shape[1] // 2
+        self.zones = {
+            "top_left": [(y, x) for y in range(mid_y) for x in range(mid_x)],
+            "top_right": [(y, x) for y in range(mid_y) for x in range(mid_x, map_shape[1])],
+            "bottom_left": [(y, x) for y in range(mid_y, map_shape[0]) for x in range(mid_x)],
+            "bottom_right": [(y, x) for y in range(mid_y, map_shape[0]) for x in range(mid_x, map_shape[1])],
+            "center": [(y, x) for y in range(mid_y - 1, mid_y + 2) for x in range(mid_x - 1, mid_x + 2)
+                       if 0 <= y < map_shape[0] and 0 <= x < map_shape[1]]
+        }
+
         # Process initial observations
         self._process_observations(initial_observations)
+
+    def _calculate_zone_exploration(self):
+        zone_exploration = {}
+        for zone, tiles in self.zones.items():
+            explored = len(set(tiles) & self.visited)
+            zone_exploration[zone] = explored / len(tiles) if tiles else 1  # Avoid division by zero
+        return zone_exploration
+
+    def get_path(self):
+        return self.path
 
     def _process_observations(self, observations):
         y, x = self.harry_loc
@@ -142,6 +164,4 @@ class GringottsController:
                             self.path.append(next_move)
                             return "move", next_move
 
-        # If no backtracking options found, wait
-        # print("stuck")
         return ("wait",)

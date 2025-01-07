@@ -2,9 +2,11 @@
 # import ex2_dpll as ex2
 import ex2
 import time
-import inputs
+import inputs_gil as inputs
 from copy import deepcopy
-
+import time
+import os
+import sys
 
 CODES_NEW = {'passage': 0, 'dragon': 1, 'vault': 2, 'trap': 3, 'hollow_vault': 4, 'vault_trap': 5, 'dragon_trap': 6,
              'hollow_trap_vault': 7}
@@ -45,8 +47,10 @@ class GringottsChecker(Checker):
     hollow_loc: tuple
     collected_hollow: bool
 
+
     def __init__(self, input):
         super().__init__()
+        self.path = []
         self.game_map = input['full_map']
         self.harry_cur_loc = input['Harry_start']
         self.dragon_locs = [(x, y) for x in range(len(self.game_map)) for y in range(len(self.game_map[x]))
@@ -147,10 +151,13 @@ class GringottsChecker(Checker):
 
     def change_state_after_action(self, action):
         if action[0] == "move":
+            self.path.append(action)
             self.change_state_after_moving(action)
         elif action[0] == "destroy":
+            self.path.append(action)
             self.change_state_after_destroy(action)
         elif action[0] == "collect":
+            self.path.append(action)
             self.change_state_after_collect()
 
     def change_state_after_moving(self, action):
@@ -180,12 +187,66 @@ class GringottsChecker(Checker):
         return self.collected_hollow
 
 
-if __name__ == '__main__':
 
+def clear_screen():
+    os.system('cls' if os.name == 'nt' else 'clear')
+
+
+def get_symbol(code):
+    symbols = {
+        0: '⬜',  # passage
+        1: '🐉',  # dragon
+        2: '🏰',  # vault
+        3: '⚡',  # trap
+        4: '🏰',  # hollow vault
+        5: '💥',  # vault trap
+        6: '🔥',  # dragon trap
+        7: '⚜️',  # hollow trap vault
+    }
+    return symbols.get(code, '❓')
+
+
+def print_board(board, path=None):
+    current_path = set(path) if path else set()
+
+    for i in range(len(board)):
+        row = ""
+        for j in range(len(board[i])):
+            if (i, j) in current_path:
+                row += "\033[42m" + get_symbol(board[i][j]) + "\033[0m"  # Green background for entire path
+            else:
+                row += get_symbol(board[i][j])
+        print(row)
+    print("\n")
+
+
+def animate_path(board, actions):
+    path = []
+
+    # Convert actions from the given format to a list of tuples
+    processed_actions = [(action[0], tuple(action[1]) if len(action) > 1 else None)
+                         for action in actions]
+
+    clear_screen()
+    print("Initial board:")
+    print_board(board)
+    time.sleep(2)
+
+    for action, coords in processed_actions:
+        clear_screen()
+        if action == 'move':
+            path.append(coords)
+        print(f"Action: {action}")
+        if coords:
+            print(f"Position: {coords}")
+        print_board(board, path)
+        time.sleep(0.5)
+
+if __name__ == '__main__':
     def check_board(input, i):
         grid = input['full_map']
         # Transpose the grid
-        gridT = [list(row) for row in zip(*grid)]
+        gridT = [list(row) for row in zip(*deepcopy(grid))]
 
         # Collect valid locations from original and transposed grids
         locs = [(r, c) for r in range(len(grid)) for c in range(len(grid[0])) if grid[r][c] == 0]
@@ -193,19 +254,21 @@ if __name__ == '__main__':
 
         # Test on original grid
         for loc in locs:
-            test_input = deepcopy(input)  # Preserve original input dictionary
+            test_input = deepcopy(input)
             test_input['Harry_loc'] = loc
             test_input['full_map'] = grid
-            my_checker = GringottsChecker(test_input).check_controller()
+            my_checker = GringottsChecker(test_input)
             total[i] += 1
-            if int(my_checker) > 0:
+            if int(my_checker.check_controller()) > 0:
                 cnt[i] += 1
+            # if int(my_checker.check_controller()) == -1:
+            #     print(my_checker.path)
 
         # Test on transposed grid
         for loc in locsT:
-            test_input = deepcopy(input)  # Preserve original input dictionary
+            test_input = deepcopy(input)
             test_input['Harry_loc'] = loc
-            test_input['full_map'] = deepcopy(gridT)  # Use deepcopy for the transposed grid
+            test_input['full_map'] = deepcopy(gridT)
             my_checker = GringottsChecker(test_input).check_controller()
             total[i] += 1
             if int(my_checker) > 0:
@@ -221,18 +284,18 @@ if __name__ == '__main__':
         # print(my_checker.check_controller())
         check_board(input, 0)
     # print("\n----------------level one tests:----------------\n")
-    for number, input in enumerate(inputs.inputlv1_960210 + inputs.inputlv1_42 + inputs.inputlv1_69):
+    for number, input in enumerate(inputs.inputlv1_960210 + inputs.inputlv1_42 + inputs.inputlv1_69 + inputs.inputlv1_31415926):
         check_board(input, 1)
 
     # print("\n----------------level two tests:----------------\n")
-    for number, input in enumerate(inputs.inputlv2_960210 + inputs.inputlv2_42 + inputs.inputlv2_69):
+    for number, input in enumerate(inputs.inputlv2_960210 + inputs.inputlv2_42 + inputs.inputlv2_69 + inputs.inputlv2_31415926):
         check_board(input, 2)
 
     # print("\n----------------level three tests:----------------\n")
-    for number, input in enumerate(inputs.inputlv3_960210 + inputs.inputlv3_42 + inputs.inputlv3_69):
+    for number, input in enumerate(inputs.inputlv3_960210 + inputs.inputlv3_42 + inputs.inputlv3_69 + inputs.inputlv3_31415926):
         check_board(input, 3)
-    results = [(c, t, round(c / t, 3)) for c, t in zip(cnt, total)]
+    results = [(c, t, round(c / t, 3)) for c, t in zip(cnt, total) if t > 0]
     print("passed, total number, Percent of boards passed")
-    # print("TA boards ")
     print(results)
+    print(f"Overall stats, solved {sum(cnt)} boards out of {sum(total)} with an accuracy of: {round(sum(cnt) / sum(total), 3)} ")
 
