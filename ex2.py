@@ -143,25 +143,43 @@ class GringottsController:
                 self.known_safe.add(adj)
                 return "destroy", adj
 
+        # for adj in adjacent:
+        #     if adj not in self.visited.union(self.known_dragons.union(self.potential_traps)):
+        #         self.harry_loc = adj
+        #         self.visited.add(adj)
+        #         self.path.append(adj)
+        #         return "move", adj
+        # When choosing next move:
+        scored_moves = []
         for adj in adjacent:
             if adj not in self.visited.union(self.known_dragons.union(self.potential_traps)):
-                self.harry_loc = adj
-                self.visited.add(adj)
-                self.path.append(adj)
-                return "move", adj
+                score = self._evaluate_move_potential(adj)
+                scored_moves.append((score, adj))
 
-        if len(self.path) > 1:
-            for i in range(len(self.path) - 1, -1, -1):
-                current_pos = self.path[i]
-                adjacent = self._get_adjacent_tiles(*current_pos)
+        if scored_moves:
+            best_move = max(scored_moves, key=lambda x: x[0])[1]
+            self.harry_loc = best_move
+            self.visited.add(best_move)
+            self.path.append(best_move)
+            return "move", best_move
 
-                for adj in adjacent:
-                    if adj not in self.visited.union(self.known_dragons.union(self.potential_traps)):
-                        path_to_pos = self._astar(self.harry_loc, current_pos)
-                        if path_to_pos:
-                            next_move = path_to_pos[0]
-                            self.harry_loc = next_move
-                            self.path.append(next_move)
-                            return "move", next_move
 
         return ("wait",)
+
+    def _evaluate_move_potential(self, pos, depth=2):
+        visited = {pos}
+        unexplored = set()
+
+        def explore(current_pos, current_depth):
+            if current_depth > depth:
+                return
+
+            for next_pos in self._get_adjacent_tiles(*current_pos):
+                if next_pos not in visited and next_pos not in self.known_dragons:
+                    if next_pos not in self.visited:
+                        unexplored.add(next_pos)
+                    visited.add(next_pos)
+                    explore(next_pos, current_depth + 1)
+
+        explore(pos, 0)
+        return len(unexplored)

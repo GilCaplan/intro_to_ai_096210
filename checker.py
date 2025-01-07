@@ -1,6 +1,7 @@
 
 # import ex2_dpll as ex2
-import ex2
+import ex2_gilad as ex2
+# import ex2
 import time
 import inputs_gil as inputs
 from copy import deepcopy
@@ -266,22 +267,25 @@ if __name__ == '__main__':
 
 
     def check_board(input, i):
-        grid = input['full_map']
-        rotations = generate_rotations(grid)
+        try:
+            grid = input['full_map']
+            rotations = generate_rotations(grid)
 
-        for rotation in rotations:
-            # Collect valid locations for the current rotation
-            locs = [(r, c) for r in range(len(rotation)) for c in range(len(rotation[0])) if rotation[r][c] == 0]
+            for rotation in rotations:
+                # Collect valid locations for the current rotation
+                locs = [(r, c) for r in range(len(rotation)) for c in range(len(rotation[0])) if rotation[r][c] == 0]
 
-            # Test each location on the current rotation
-            for loc in locs:
-                test_input = deepcopy(input)
-                test_input['Harry_loc'] = loc
-                test_input['full_map'] = rotation
-                my_checker = GringottsChecker(test_input)
-                total[i] += 1
-                if int(my_checker.check_controller()) > 0:
-                    cnt[i] += 1
+                # Test each location on the current rotation
+                for loc in locs:
+                    test_input = deepcopy(input)
+                    test_input['Harry_loc'] = loc
+                    test_input['full_map'] = rotation
+                    my_checker = GringottsChecker(test_input)
+                    total[i] += 1
+                    if int(my_checker.check_controller()) > 0:
+                        cnt[i] += 1
+        except Exception:
+            pass
 
 
     # print(ex2.ids)
