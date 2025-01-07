@@ -84,7 +84,7 @@ class GringottsChecker(Checker):
             action = controller.get_next_action(observations)
             finish = time.time()
             if finish - start > ACTION_TIMEOUT:
-                return -1
+                return -2
                 # return f"Timeout on action! Took {finish - start} seconds, should take no more than {ACTION_TIMEOUT}"
             if not self.is_action_legal(action):
                 return -1
@@ -243,36 +243,45 @@ def animate_path(board, actions):
         time.sleep(0.5)
 
 if __name__ == '__main__':
+    from copy import deepcopy
+
+
+    def rotate_90(grid):
+        """Rotate the grid 90 degrees clockwise."""
+        return [list(row) for row in zip(*grid[::-1])]
+
+
+    def generate_rotations(grid):
+        """Generate all 6 unique rotations of the grid."""
+        rotations = [grid]  # Start with the original grid
+        for _ in range(3):  # Generate 90°, 180°, 270° rotations
+            grid = rotate_90(grid)
+            rotations.append(grid)
+        transposed = [list(row) for row in zip(*rotations[0])]  # Transpose of the original grid
+        rotations.append(transposed)  # Include the non-rotated transpose
+        for _ in range(3):  # Generate 90°, 180°, 270° rotations of the transpose
+            transposed = rotate_90(transposed)
+            rotations.append(transposed)
+        return rotations
+
+
     def check_board(input, i):
         grid = input['full_map']
-        # Transpose the grid
-        gridT = [list(row) for row in zip(*deepcopy(grid))]
+        rotations = generate_rotations(grid)
 
-        # Collect valid locations from original and transposed grids
-        locs = [(r, c) for r in range(len(grid)) for c in range(len(grid[0])) if grid[r][c] == 0]
-        locsT = [(r, c) for r in range(len(gridT)) for c in range(len(gridT[0])) if gridT[r][c] == 0]
+        for rotation in rotations:
+            # Collect valid locations for the current rotation
+            locs = [(r, c) for r in range(len(rotation)) for c in range(len(rotation[0])) if rotation[r][c] == 0]
 
-        # Test on original grid
-        for loc in locs:
-            test_input = deepcopy(input)
-            test_input['Harry_loc'] = loc
-            test_input['full_map'] = grid
-            my_checker = GringottsChecker(test_input)
-            total[i] += 1
-            if int(my_checker.check_controller()) > 0:
-                cnt[i] += 1
-            # if int(my_checker.check_controller()) == -1:
-            #     print(my_checker.path)
-
-        # Test on transposed grid
-        for loc in locsT:
-            test_input = deepcopy(input)
-            test_input['Harry_loc'] = loc
-            test_input['full_map'] = deepcopy(gridT)
-            my_checker = GringottsChecker(test_input).check_controller()
-            total[i] += 1
-            if int(my_checker) > 0:
-                cnt[i] += 1
+            # Test each location on the current rotation
+            for loc in locs:
+                test_input = deepcopy(input)
+                test_input['Harry_loc'] = loc
+                test_input['full_map'] = rotation
+                my_checker = GringottsChecker(test_input)
+                total[i] += 1
+                if int(my_checker.check_controller()) > 0:
+                    cnt[i] += 1
 
 
     # print(ex2.ids)
