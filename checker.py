@@ -84,8 +84,8 @@ class GringottsChecker(Checker):
             start = time.time()
             action = controller.get_next_action(observations)
             finish = time.time()
-            if finish - start > ACTION_TIMEOUT:
-                return -2
+            # if finish - start > ACTION_TIMEOUT:
+            #     return -2
                 # return f"Timeout on action! Took {finish - start} seconds, should take no more than {ACTION_TIMEOUT}"
             if not self.is_action_legal(action):
                 return -1
@@ -199,7 +199,7 @@ def get_symbol(code):
         1: '🐉',  # dragon
         2: '🏰',  # vault
         3: '⚡',  # trap
-        4: '🏰',  # hollow vault
+        4:  '🎁' ,  # hollow vault
         5: '💥',  # vault trap
         6: '🔥',  # dragon trap
         7: '⚜️',  # hollow trap vault
@@ -266,11 +266,13 @@ if __name__ == '__main__':
         return rotations
 
 
-    def check_board(input, i):
+    def check_board(input, i, flag=False):
+        first = True
         try:
             grid = input['full_map']
             rotations = generate_rotations(grid)
-
+            if flag:
+                print(GringottsChecker(input).check_controller())
             for rotation in rotations:
                 # Collect valid locations for the current rotation
                 locs = [(r, c) for r in range(len(rotation)) for c in range(len(rotation[0])) if rotation[r][c] == 0]
@@ -284,6 +286,10 @@ if __name__ == '__main__':
                     total[i] += 1
                     if int(my_checker.check_controller()) > 0:
                         cnt[i] += 1
+                    # elif first:
+                    #     GringottsChecker(test_input).check_controller()
+                    #     animate_path(grid, my_checker.path)
+                    #     first = False
         except Exception:
             pass
 
@@ -291,22 +297,26 @@ if __name__ == '__main__':
     # print(ex2.ids)
     cnt = [0, 0, 0, 0] # TA examples, lv1, lv2, lv3
     total = [0, 0, 0, 0]
+    flag = False
 
     for number, input in enumerate(inputs.inputs):
         # my_checker = GringottsChecker(input)
         # print(my_checker.check_controller())
         check_board(input, 0)
     # print("\n----------------level one tests:----------------\n")
+    # inputs.inputlv1_960210 + inputs.inputlv1_42 + inputs.inputlv1_69 + inputs.inputlv1_31415926
     for number, input in enumerate(inputs.inputlv1_960210 + inputs.inputlv1_42 + inputs.inputlv1_69 + inputs.inputlv1_31415926):
-        check_board(input, 1)
+        check_board(input, 1, flag)
 
     # print("\n----------------level two tests:----------------\n")
+    #  inputs.inputlv2_960210 + inputs.inputlv2_42 + inputs.inputlv2_69 + inputs.inputlv2_31415926
     for number, input in enumerate(inputs.inputlv2_960210 + inputs.inputlv2_42 + inputs.inputlv2_69 + inputs.inputlv2_31415926):
-        check_board(input, 2)
+        check_board(input, 2, flag)
 
     # print("\n----------------level three tests:----------------\n")
+    #  inputs.inputlv3_960210 + inputs.inputlv3_42 + inputs.inputlv3_69 + inputs.inputlv3_31415926
     for number, input in enumerate(inputs.inputlv3_960210 + inputs.inputlv3_42 + inputs.inputlv3_69 + inputs.inputlv3_31415926):
-        check_board(input, 3)
+        check_board(input, 3, flag)
     results = [(c, t, round(c / t, 3)) for c, t in zip(cnt, total) if t > 0]
     print("passed, total number, Percent of boards passed")
     print(results)

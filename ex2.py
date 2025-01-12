@@ -1,17 +1,17 @@
 from collections import deque
 import heapq
 ids = ['208237479', '208237479']
-
+from checker import animate_path
 class GringottsController:
     def __init__(self, map_shape, harry_loc, initial_observations):
         self.map_shape = map_shape
         self.harry_loc = harry_loc
-        self.known_safe = {harry_loc}
+        self.known_safe = set()
         self.known_dragons = set()
         self.known_vaults = set()
         self.potential_traps = set()
-        self.visited = {harry_loc}
-        self.path = [harry_loc]
+        self.visited = set()
+        self.path = []
         self.checked_vaults = set()
 
         self.current_zone = None
@@ -47,11 +47,11 @@ class GringottsController:
         has_sulfur = False
 
         for obs in observations:
-            if obs[0] == "dragon":
+            if obs[0].lower() == "dragon":
                 self.known_dragons.add(obs[1])
-            elif obs[0] == "vault":
+            elif obs[0].lower() == "vault":
                 self.known_vaults.add(obs[1])
-            elif obs[0] == "sulfur":
+            elif obs[0].lower() == "sulfur":
                 has_sulfur = True
 
         if has_sulfur:
@@ -149,19 +149,6 @@ class GringottsController:
                 self.visited.add(adj)
                 self.path.append(adj)
                 return "move", adj
-        # When choosing next move:
-        # scored_moves = []
-        # for adj in adjacent:
-        #     if adj not in self.visited.union(self.known_dragons.union(self.potential_traps)):
-        #         score = self._evaluate_move_potential(adj)
-        #         scored_moves.append((score, adj))
-        #
-        # if scored_moves:
-        #     best_move = max(scored_moves, key=lambda x: x[0])[1]
-        #     self.harry_loc = best_move
-        #     self.visited.add(best_move)
-        #     self.path.append(best_move)
-        #     return "move", best_move
 
         if len(self.path) > 1:
             for i in range(len(self.path) - 1, -1, -1):
