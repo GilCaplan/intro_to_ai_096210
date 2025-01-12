@@ -2,12 +2,10 @@
 # import ex2_dpll as ex2
 # import ex2_gilad as ex2
 import ex2
-import time
 import inputs_gil as inputs
 from copy import deepcopy
 import time
 import os
-import sys
 
 CODES_NEW = {'passage': 0, 'dragon': 1, 'vault': 2, 'trap': 3, 'hollow_vault': 4, 'vault_trap': 5, 'dragon_trap': 6,
              'hollow_trap_vault': 7}
@@ -244,7 +242,6 @@ def animate_path(board, actions):
         time.sleep(0.5)
 
 if __name__ == '__main__':
-    from copy import deepcopy
 
 
     def rotate_90(grid):
@@ -256,9 +253,9 @@ if __name__ == '__main__':
         """Generate all 6 unique rotations of the grid."""
         rotations = [grid]  # Start with the original grid
         for _ in range(3):  # Generate 90°, 180°, 270° rotations
-            grid = rotate_90(grid)
+            grid = deepcopy(rotate_90(grid))
             rotations.append(grid)
-        transposed = [list(row) for row in zip(*rotations[0])]  # Transpose of the original grid
+        transposed = deepcopy([list(row) for row in zip(*rotations[0])])  # Transpose of the original grid
         rotations.append(transposed)  # Include the non-rotated transpose
         for _ in range(3):  # Generate 90°, 180°, 270° rotations of the transpose
             transposed = rotate_90(transposed)
@@ -266,32 +263,37 @@ if __name__ == '__main__':
         return rotations
 
 
-    def check_board(input, i, flag=False):
-        first = True
-        try:
-            grid = input['full_map']
-            rotations = generate_rotations(grid)
-            if flag:
-                print(GringottsChecker(input).check_controller())
-            for rotation in rotations:
-                # Collect valid locations for the current rotation
-                locs = [(r, c) for r in range(len(rotation)) for c in range(len(rotation[0])) if rotation[r][c] == 0]
+    def check_board(input, i, flag=False, flag2=True):
+        if flag2:
+            first = True
+            try:
+                grid = input['full_map']
+                rotations = generate_rotations(grid)
+                if flag:
+                    print(GringottsChecker(input).check_controller())
+                for rotation in rotations:
+                    # Collect valid locations for the current rotation
+                    locs = [(r, c) for r in range(len(rotation)) for c in range(len(rotation[0])) if rotation[r][c] == 0]
 
-                # Test each location on the current rotation
-                for loc in locs:
-                    test_input = deepcopy(input)
-                    test_input['Harry_loc'] = loc
-                    test_input['full_map'] = rotation
-                    my_checker = GringottsChecker(test_input)
-                    total[i] += 1
-                    if int(my_checker.check_controller()) > 0:
-                        cnt[i] += 1
-                    # elif first:
-                    #     GringottsChecker(test_input).check_controller()
-                    #     animate_path(grid, my_checker.path)
-                    #     first = False
-        except Exception:
-            pass
+                    # Test each location on the current rotation
+                    for loc in locs:
+                        test_input = deepcopy(input)
+                        test_input['Harry_loc'] = loc
+                        test_input['full_map'] = deepcopy(rotation)
+                        my_checker = GringottsChecker(test_input)
+                        total[i] += 1
+                        if int(my_checker.check_controller()) > 0:
+                            cnt[i] += 1
+                        elif first:
+                            # GringottsChecker(test_input).check_controller()
+                            # animate_path(test_input["full_map"], my_checker.path)
+                            first = False
+            except Exception:
+                pass
+        else:
+            checker = GringottsChecker(input)
+            print(checker.check_controller())
+
 
 
     # print(ex2.ids)
