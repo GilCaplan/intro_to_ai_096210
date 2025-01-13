@@ -1,7 +1,7 @@
 
 # import ex2_dpll as ex2
-# import ex2_gilad as ex2
-import ex2
+import ex2_gilad as ex2
+# import ex2
 import inputs_gil as inputs
 from copy import deepcopy
 import time
@@ -301,24 +301,45 @@ if __name__ == '__main__':
     total = [0, 0, 0, 0]
     flag = False
 
-    for number, input in enumerate(inputs.inputs):
-        # my_checker = GringottsChecker(input)
-        # print(my_checker.check_controller())
-        check_board(input, 0)
-    # print("\n----------------level one tests:----------------\n")
-    # inputs.inputlv1_960210 + inputs.inputlv1_42 + inputs.inputlv1_69 + inputs.inputlv1_31415926
-    for number, input in enumerate(inputs.inputlv1_960210 + inputs.inputlv1_42 + inputs.inputlv1_69 + inputs.inputlv1_31415926):
-        check_board(input, 1, flag)
-
-    # print("\n----------------level two tests:----------------\n")
-    #  inputs.inputlv2_960210 + inputs.inputlv2_42 + inputs.inputlv2_69 + inputs.inputlv2_31415926
-    for number, input in enumerate(inputs.inputlv2_960210 + inputs.inputlv2_42 + inputs.inputlv2_69 + inputs.inputlv2_31415926):
-        check_board(input, 2, flag)
-
-    # print("\n----------------level three tests:----------------\n")
-    #  inputs.inputlv3_960210 + inputs.inputlv3_42 + inputs.inputlv3_69 + inputs.inputlv3_31415926
-    for number, input in enumerate(inputs.inputlv3_960210 + inputs.inputlv3_42 + inputs.inputlv3_69 + inputs.inputlv3_31415926):
-        check_board(input, 3, flag)
+    choose_seeds = {69:True, 42: True, 31415926:True, 960210: True, 'TA': True}
+    levels = [[],[], []]
+    if choose_seeds[69]:
+        levels[0].extend(inputs.inputlv1_69)
+        levels[1].extend(inputs.inputlv2_69)
+        levels[2].extend(inputs.inputlv3_69)
+    if choose_seeds[42]:
+        levels[0].extend(inputs.inputlv1_42)
+        levels[1].extend(inputs.inputlv2_42)
+        levels[2].extend(inputs.inputlv3_42)
+    if choose_seeds[960210]:
+        levels[0].extend(inputs.inputlv1_960210)
+        levels[1].extend(inputs.inputlv2_960210)
+        levels[2].extend(inputs.inputlv3_960210)
+    if choose_seeds[31415926]:
+        levels[0].extend(inputs.inputlv1_31415926)
+        levels[1].extend(inputs.inputlv2_31415926)
+        levels[2].extend(inputs.inputlv3_31415926)
+    if choose_seeds['TA']:
+        print("\n----------------TA tests:----------------\n")
+        for number, input in enumerate(inputs.inputs):
+            my_checker = GringottsChecker(input)
+            print(my_checker.check_controller())
+            check_board(input, 0)
+    if len(levels[0])>0:
+        print("\n----------------level one tests:----------------\n")
+        for number, input in enumerate(levels[0]):
+            check_board(input, 1, flag)
+            print(GringottsChecker(input).check_controller())
+    if len(levels[1]) > 0:
+        print("\n----------------level two tests:----------------\n")
+        for number, input in enumerate(levels[1]):
+            check_board(input, 2, flag)
+            print(GringottsChecker(input).check_controller())
+    if len(levels[2]) > 0:
+        print("\n----------------level three tests:----------------\n")
+        for number, input in enumerate(levels[2]):
+            check_board(input, 3, flag)
+            print(GringottsChecker(input).check_controller())
     results = [(c, t, round(c / t, 3)) for c, t in zip(cnt, total) if t > 0]
     print("passed, total number, Percent of boards passed")
     print(results)
