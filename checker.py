@@ -1,7 +1,7 @@
 
 # import ex2_dpll as ex2
-import ex2_gilad as ex2
-# import ex2
+# import ex2_gilad as ex2
+import ex2
 import inputs_gil as inputs
 from copy import deepcopy
 import time
@@ -300,7 +300,7 @@ if __name__ == '__main__':
     cnt = [0, 0, 0, 0] # TA examples, lv1, lv2, lv3
     total = [0, 0, 0, 0]
     flag = False
-
+    f = False
     choose_seeds = {69:True, 42: True, 31415926:True, 960210: True, 'TA': True}
     levels = [[],[], []]
     if choose_seeds[69]:
@@ -320,26 +320,31 @@ if __name__ == '__main__':
         levels[1].extend(inputs.inputlv2_31415926)
         levels[2].extend(inputs.inputlv3_31415926)
     if choose_seeds['TA']:
-        print("\n----------------TA tests:----------------\n")
         for number, input in enumerate(inputs.inputs):
-            my_checker = GringottsChecker(input)
-            print(my_checker.check_controller())
+            if f:
+                print("\n----------------TA tests:----------------\n")
+                my_checker = GringottsChecker(input)
+                print(my_checker.check_controller())
             check_board(input, 0)
     if len(levels[0])>0:
-        print("\n----------------level one tests:----------------\n")
+
         for number, input in enumerate(levels[0]):
             check_board(input, 1, flag)
-            print(GringottsChecker(input).check_controller())
+            if f:
+                print("\n----------------level one tests:----------------\n")
+                print(GringottsChecker(input).check_controller())
     if len(levels[1]) > 0:
-        print("\n----------------level two tests:----------------\n")
         for number, input in enumerate(levels[1]):
             check_board(input, 2, flag)
-            print(GringottsChecker(input).check_controller())
+            if f:
+                print("\n----------------level two tests:----------------\n")
+                print(GringottsChecker(input).check_controller())
     if len(levels[2]) > 0:
-        print("\n----------------level three tests:----------------\n")
         for number, input in enumerate(levels[2]):
             check_board(input, 3, flag)
-            print(GringottsChecker(input).check_controller())
+            if f:
+                print("\n----------------level three tests:----------------\n")
+                print(GringottsChecker(input).check_controller())
     results = [(c, t, round(c / t, 3)) for c, t in zip(cnt, total) if t > 0]
     print("passed, total number, Percent of boards passed")
     print(results)

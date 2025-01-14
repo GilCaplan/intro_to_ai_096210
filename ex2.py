@@ -100,9 +100,7 @@ class GringottsController:
                 self.potential_traps.discard(adj)
                 self.known_safe.add(adj)
                 return "destroy", adj
-
-        for adj in adjacent:
-            if adj not in self.visited.union(self.known_dragons.union(self.potential_traps)):
+            if adj not in self.visited.union(self.known_dragons):
                 self.harry_loc = adj
                 self.visited.add(adj)
                 self.path.append(adj)
