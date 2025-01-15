@@ -285,7 +285,7 @@ if __name__ == '__main__':
                         if int(my_checker.check_controller()) > 0:
                             cnt[i] += 1
                         elif first:
-                            # GringottsChecker(test_input).check_controller()
+                            GringottsChecker(test_input).check_controller()
                             # animate_path(test_input["full_map"], my_checker.path)
                             first = False
             except Exception:

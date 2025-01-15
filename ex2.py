@@ -14,9 +14,14 @@ class GringottsController:
         self.visited_twice = set()
         self.path = []
         self.checked_vaults = set()
-
-        self.junctions = {}
-        self.inactive_junctions = set()
+        rows, cols = map_shape
+        mid_row, mid_col = rows // 2, cols // 2
+        self.zones = {
+            "upper_left": set((r, c) for r in range(0, mid_row) for c in range(0, mid_col)),
+            "upper_right": set((r, c) for r in range(0, mid_row) for c in range(mid_col, cols)),
+            "bottom_left": set((r, c) for r in range(mid_row, rows) for c in range(0, mid_col)),
+            "bottom_right": set((r, c) for r in range(mid_row, rows) for c in range(mid_col, cols)),
+        }
 
     def _process_observations(self, observations):
         y, x = self.harry_loc
@@ -81,6 +86,44 @@ class GringottsController:
 
         return nearest_vault, shortest_path
 
+    def discovered_amounts(self):
+        def zone_discovered(group):
+            z = 0
+            for (r, c) in group:
+                if (r, c) not in self.visited and any(
+                        adj not in self.visited for adj in self._get_adjacent_tiles(r, c)):
+                    z += 1
+            return z
+
+        amounts_max, chosen = 0, None
+        for zone_name, zone_coords in self.zones.items():
+            cnt = zone_discovered(zone_coords)
+            if cnt > amounts_max:
+                amounts_max = cnt
+                chosen = zone_name
+
+        if not chosen:  # If no unexplored zones found
+            return "wait",
+
+        # Find the nearest unvisited coordinate in the chosen zone
+        best_coord = None
+        min_path_len = float('inf')
+        for coord in self.zones[chosen]:
+            if coord not in self.visited:
+                path = self._astar(self.harry_loc, coord)
+                if path and len(path) < min_path_len:
+                    min_path_len = len(path)
+                    best_coord = coord
+
+        if not best_coord:  # If no reachable coordinates found
+            return "wait",
+
+        move = self._astar(self.harry_loc, best_coord)[0]
+        if move in self.potential_traps:
+            return 'destroy', move
+        return 'move', move
+
+
     def get_next_action(self, observations):
         """Determine next action with focus on minimizing turns."""
         self._process_observations(observations)
@@ -112,7 +155,6 @@ class GringottsController:
                 self.visited.add(adj)
                 self.path.append(adj)
                 return "move", adj
-
         if len(self.path) > 1:
             for i in range(len(self.path) - 1, -1, -1):
                 current_pos = self.path[i]
@@ -125,3 +167,4 @@ class GringottsController:
                             self.harry_loc = next_move
                             self.path.append(next_move)
                             return "move", next_move
+        return self.discovered_amounts()
