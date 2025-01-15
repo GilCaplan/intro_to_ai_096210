@@ -15,6 +15,9 @@ class GringottsController:
         self.path = []
         self.checked_vaults = set()
 
+        self.junctions = {}
+        self.inactive_junctions = set()
+
     def _process_observations(self, observations):
         y, x = self.harry_loc
         adjacent = self._get_adjacent_tiles(y, x)
@@ -94,9 +97,13 @@ class GringottsController:
                 self.path.append(next_move)
                 return "move", next_move
 
-        adjacent = sorted(self._get_adjacent_tiles(*self.harry_loc), key=lambda loc: loc not in self.known_vaults - self.checked_vaults)
+        adjacent = sorted(self._get_adjacent_tiles(*self.harry_loc),
+                          key=lambda loc: loc not in
+                                          (self.known_vaults - self.checked_vaults).union(self.known_dragons).union(
+                                              self.visited))
+
         for adj in adjacent:
-            if adj in self.potential_traps - self.known_dragons:
+            if adj in self.potential_traps:
                 self.potential_traps.discard(adj)
                 self.known_safe.add(adj)
                 return "destroy", adj
@@ -110,7 +117,6 @@ class GringottsController:
             for i in range(len(self.path) - 1, -1, -1):
                 current_pos = self.path[i]
                 adjacent = self._get_adjacent_tiles(*current_pos)
-
                 for adj in adjacent:
                     if adj not in self.visited.union(self.known_dragons.union(self.potential_traps)):
                         path_to_pos = self._astar(self.harry_loc, current_pos)
