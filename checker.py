@@ -264,6 +264,15 @@ if __name__ == '__main__':
         return rotations
 
 
+    def update_loading_bar(progress, total, bar_length=40):
+        """Update and display a loading bar based on progress."""
+        percent = progress / total
+        filled_length = int(bar_length * percent)
+        bar = "█" * filled_length + "-" * (bar_length - filled_length)
+        print(f"\r|{bar}| {progress}/{total} ({percent * 100:.2f}%)", end="")
+        if progress == total:
+            print()
+
     def check_board(input, i, flag=False, flag2=True):
         if flag2:
             first = True
@@ -296,6 +305,15 @@ if __name__ == '__main__':
             print(checker.check_controller())
 
 
+    def calculate_total_tests(level):
+        """Calculate the total number of tests for a given level."""
+        total_tests = 0
+        for input in level:
+            grid = input['full_map']
+            zeros = sum(1 for row in grid for item in row if item == 0)
+            total_tests += zeros * 6
+        return total_tests
+
 
     # print(ex2.ids)
     cnt = [0, 0, 0, 0] # TA examples, lv1, lv2, lv3
@@ -327,23 +345,41 @@ if __name__ == '__main__':
                 my_checker = GringottsChecker(input)
                 print(my_checker.check_controller())
             check_board(input, 0)
-    if len(levels[0])>0:
+
+    if len(levels[0]) > 0:
         print("\n----------------level one tests:----------------\n")
+        total_tests = calculate_total_tests(levels[0])
+        progress = 0
         for number, input in enumerate(levels[0]):
             check_board(input, 1, flag)
-            if f:
+            progress += sum(1 for row in input['full_map'] for item in row if item == 0) * 6
+            update_loading_bar(progress, total_tests)
+        if f:
+            for input in levels[0]:
                 print(GringottsChecker(input).check_controller())
+
     if len(levels[1]) > 0:
         print("\n----------------level two tests:----------------\n")
+        total_tests = calculate_total_tests(levels[1])
+        progress = 0
         for number, input in enumerate(levels[1]):
             check_board(input, 2, flag)
-            if f:
+            progress += sum(1 for row in input['full_map'] for item in row if item == 0) * 6
+            update_loading_bar(progress, total_tests)
+        if f:
+            for input in levels[1]:
                 print(GringottsChecker(input).check_controller())
+
     if len(levels[2]) > 0:
         print("\n----------------level three tests:----------------\n")
+        total_tests = calculate_total_tests(levels[2])
+        progress = 0
         for number, input in enumerate(levels[2]):
             check_board(input, 3, flag)
-            if f:
+            progress += sum(1 for row in input['full_map'] for item in row if item == 0) * 6
+            update_loading_bar(progress, total_tests)
+        if f:
+            for input in levels[2]:
                 print(GringottsChecker(input).check_controller())
     results = [(c, t, round(c / t, 3)) for c, t in zip(cnt, total) if t > 0]
     print("passed, total number, Percent of boards passed")
