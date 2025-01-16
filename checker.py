@@ -273,12 +273,12 @@ if __name__ == '__main__':
                     print(GringottsChecker(input).check_controller())
                 for rotation in rotations:
                     # Collect valid locations for the current rotation
-                    locs = [(r, c) for r in range(len(rotation)) for c in range(len(rotation[0])) if rotation[r][c] == 0]
+                    locs = [tuple([r, c]) for r in range(len(rotation)) for c in range(len(rotation[0])) if rotation[r][c] == 0]
 
                     # Test each location on the current rotation
                     for loc in locs:
                         test_input = deepcopy(input)
-                        test_input['Harry_loc'] = loc
+                        test_input['Harry_start'] = loc
                         test_input['full_map'] = deepcopy(rotation)
                         my_checker = GringottsChecker(test_input)
                         total[i] += 1
@@ -319,31 +319,30 @@ if __name__ == '__main__':
         levels[0].extend(inputs.inputlv1_31415926)
         levels[1].extend(inputs.inputlv2_31415926)
         levels[2].extend(inputs.inputlv3_31415926)
+    print("\n----------------TA tests:----------------\n")
     if choose_seeds['TA']:
         for number, input in enumerate(inputs.inputs):
             if f:
-                print("\n----------------TA tests:----------------\n")
                 my_checker = GringottsChecker(input)
                 print(my_checker.check_controller())
             check_board(input, 0)
     if len(levels[0])>0:
-
+        print("\n----------------level one tests:----------------\n")
         for number, input in enumerate(levels[0]):
             check_board(input, 1, flag)
             if f:
-                print("\n----------------level one tests:----------------\n")
                 print(GringottsChecker(input).check_controller())
     if len(levels[1]) > 0:
+        print("\n----------------level two tests:----------------\n")
         for number, input in enumerate(levels[1]):
             check_board(input, 2, flag)
             if f:
-                print("\n----------------level two tests:----------------\n")
                 print(GringottsChecker(input).check_controller())
     if len(levels[2]) > 0:
+        print("\n----------------level three tests:----------------\n")
         for number, input in enumerate(levels[2]):
             check_board(input, 3, flag)
             if f:
-                print("\n----------------level three tests:----------------\n")
                 print(GringottsChecker(input).check_controller())
     results = [(c, t, round(c / t, 3)) for c, t in zip(cnt, total) if t > 0]
     print("passed, total number, Percent of boards passed")

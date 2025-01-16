@@ -1,6 +1,5 @@
-from collections import deque
 import heapq
-ids = ['208237479', '208237479']
+ids = ['337604821', '32622390']
 
 class GringottsController:
     def __init__(self, map_shape, harry_loc, initial_observations):
@@ -87,42 +86,47 @@ class GringottsController:
         return nearest_vault, shortest_path
 
     def discovered_amounts(self):
-        def zone_discovered(group):
+        def zone_potential(group):
             z = 0
+            accessible_unvisited = 0
             for (r, c) in group:
-                if (r, c) not in self.visited and any(
-                        adj not in self.visited for adj in self._get_adjacent_tiles(r, c)):
-                    z += 1
-            return z
+                if (r, c) in self.known_dragons:
+                    continue
+                if (r, c) not in self.visited:
+                    neighbors = self._get_adjacent_tiles(r, c)
+                    unvisited_neighbors = sum(1 for adj in neighbors if adj not in self.visited)
+                    if unvisited_neighbors > 0:
+                        z += 1
+                        path = self._astar(self.harry_loc, (r, c))
+                        if path:
+                            accessible_unvisited += 1
+            return z + (accessible_unvisited * 2)
 
-        amounts_max, chosen = 0, None
+        best_score = -1
+        best_path = None
+
         for zone_name, zone_coords in self.zones.items():
-            cnt = zone_discovered(zone_coords)
-            if cnt > amounts_max:
-                amounts_max = cnt
-                chosen = zone_name
-
-        if not chosen:  # If no unexplored zones found
+            score = zone_potential(zone_coords)
+            if score > best_score:
+                for coord in zone_coords:
+                    if coord not in self.visited and coord not in self.known_dragons:
+                        path = self._astar(self.harry_loc, coord)
+                        if path:
+                            best_score = score
+                            best_path = path
+                            break
+        if not best_path:
+            adjacent = self._get_adjacent_tiles(*self.harry_loc)
+            for adj in adjacent:
+                if adj in self.known_safe and adj not in self.known_dragons:
+                    return 'move', adj
             return "wait",
 
-        # Find the nearest unvisited coordinate in the chosen zone
-        best_coord = None
-        min_path_len = float('inf')
-        for coord in self.zones[chosen]:
-            if coord not in self.visited:
-                path = self._astar(self.harry_loc, coord)
-                if path and len(path) < min_path_len:
-                    min_path_len = len(path)
-                    best_coord = coord
+        next_move = best_path[0]
+        if next_move in self.potential_traps:
+            return 'destroy', next_move
 
-        if not best_coord:  # If no reachable coordinates found
-            return "wait",
-
-        move = self._astar(self.harry_loc, best_coord)[0]
-        if move in self.potential_traps:
-            return 'destroy', move
-        return 'move', move
-
+        return 'move', next_move
 
     def get_next_action(self, observations):
         """Determine next action with focus on minimizing turns."""
@@ -131,6 +135,7 @@ class GringottsController:
             self.checked_vaults.add(self.harry_loc)
             return ("collect",)
 
+        # Keep the nearest vault logic
         nearest_vault, path = self._find_nearest_vault()
         if path:
             next_move = path[0]
@@ -140,31 +145,40 @@ class GringottsController:
                 self.path.append(next_move)
                 return "move", next_move
 
+        # Modified adjacent tile prioritization
         adjacent = sorted(self._get_adjacent_tiles(*self.harry_loc),
-                          key=lambda loc: loc not in
-                                          (self.known_vaults - self.checked_vaults).union(self.known_dragons).union(
-                                              self.visited))
+                          key=lambda loc: (
+                              loc in (self.known_vaults - self.checked_vaults),  # First priority: unvisited vaults
+                              loc not in self.visited,  # Second priority: unvisited tiles
+                              loc in self.potential_traps,  # Third priority: traps to clear
+                              loc not in self.known_dragons  # Last priority: avoid dragons
+                          ), reverse=True)  # reverse=True makes True values come first
 
         for adj in adjacent:
             if adj in self.potential_traps:
-                self.potential_traps.discard(adj)
-                self.known_safe.add(adj)
-                return "destroy", adj
+                neighbors = self._get_adjacent_tiles(*adj)
+                if any(n not in self.visited for n in neighbors):  # Only destroy if it blocks unexplored area
+                    self.potential_traps.discard(adj)
+                    self.known_safe.add(adj)
+                    return "destroy", adj
             if adj not in self.visited.union(self.known_dragons):
                 self.harry_loc = adj
                 self.visited.add(adj)
                 self.path.append(adj)
                 return "move", adj
+
         if len(self.path) > 1:
             for i in range(len(self.path) - 1, -1, -1):
                 current_pos = self.path[i]
-                adjacent = self._get_adjacent_tiles(*current_pos)
-                for adj in adjacent:
-                    if adj not in self.visited.union(self.known_dragons.union(self.potential_traps)):
-                        path_to_pos = self._astar(self.harry_loc, current_pos)
-                        if path_to_pos:
-                            next_move = path_to_pos[0]
-                            self.harry_loc = next_move
-                            self.path.append(next_move)
-                            return "move", next_move
+                position_adjacent = self._get_adjacent_tiles(*current_pos)
+                unvisited = [adj for adj in position_adjacent
+                             if adj not in self.visited.union(self.known_dragons)]
+                if unvisited:
+                    path_to_pos = self._astar(self.harry_loc, current_pos)
+                    if path_to_pos:
+                        next_move = path_to_pos[0]
+                        self.harry_loc = next_move
+                        self.path.append(next_move)
+                        return "move", next_move
+
         return self.discovered_amounts()
