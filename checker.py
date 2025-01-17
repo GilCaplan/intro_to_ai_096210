@@ -266,14 +266,28 @@ if __name__ == '__main__':
 
     def update_loading_bar(progress, total, bar_length=40):
         """Update and display a loading bar based on progress."""
-        percent = progress / total
+        percent = progress / total if total > 0 else 1
         filled_length = int(bar_length * percent)
         bar = "█" * filled_length + "-" * (bar_length - filled_length)
         print(f"\r|{bar}| {progress}/{total} ({percent * 100:.2f}%)", end="")
         if progress == total:
             print()
 
+
+    def calculate_total_tests(level):
+        """Calculate the total number of tests for a given level."""
+        total_tests = 0
+        for input in level:
+            grid = input['full_map']
+            # Count passages (0s) in the original grid
+            zeros = sum(1 for row in grid for item in row if item == 0)
+            # Multiply by 8 since we test all 8 possible orientations (4 rotations + 4 flipped rotations)
+            total_tests += zeros * 8
+        return total_tests
+
+
     def check_board(input, i, flag=False, flag2=True):
+        """Perform checks on a board, updating progress and counters."""
         if flag2:
             first = True
             try:
@@ -283,7 +297,8 @@ if __name__ == '__main__':
                     print(GringottsChecker(input).check_controller())
                 for rotation in rotations:
                     # Collect valid locations for the current rotation
-                    locs = [tuple([r, c]) for r in range(len(rotation)) for c in range(len(rotation[0])) if rotation[r][c] == 0]
+                    locs = [tuple([r, c]) for r in range(len(rotation)) for c in range(len(rotation[0])) if
+                            rotation[r][c] == 0]
 
                     # Test each location on the current rotation
                     for loc in locs:
@@ -292,11 +307,11 @@ if __name__ == '__main__':
                         test_input['full_map'] = deepcopy(rotation)
                         my_checker = GringottsChecker(test_input)
                         total[i] += 1
-                        if int(my_checker.check_controller()) > 0:
+                        result = int(my_checker.check_controller())
+                        if result > 0:
                             cnt[i] += 1
                         elif first:
                             GringottsChecker(test_input).check_controller()
-                            # animate_path(test_input["full_map"], my_checker.path)
                             first = False
             except Exception:
                 pass
@@ -305,84 +320,56 @@ if __name__ == '__main__':
             print(checker.check_controller())
 
 
-    def calculate_total_tests(level):
-        """Calculate the total number of tests for a given level."""
-        total_tests = 0
-        for input in level:
-            grid = input['full_map']
-            zeros = sum(1 for row in grid for item in row if item == 0)
-            total_tests += zeros * 6
-        return total_tests
+    if __name__ == '__main__':
+        # Initialize counters
+        cnt = [0, 0, 0, 0]  # TA examples, lv1, lv2, lv3
+        total = [0, 0, 0, 0]
+        flag = False
+        f = False
+        choose_seeds = {69: True, 42: True, 31415926: True, 960210: True, 'TA': True}
+        levels = [[], [], []]
 
+        # Prepare levels based on seeds
+        if choose_seeds[69]:
+            levels[0].extend(inputs.inputlv1_69)
+            levels[1].extend(inputs.inputlv2_69)
+            levels[2].extend(inputs.inputlv3_69)
+        if choose_seeds[42]:
+            levels[0].extend(inputs.inputlv1_42)
+            levels[1].extend(inputs.inputlv2_42)
+            levels[2].extend(inputs.inputlv3_42)
+        if choose_seeds[960210]:
+            levels[0].extend(inputs.inputlv1_960210)
+            levels[1].extend(inputs.inputlv2_960210)
+            levels[2].extend(inputs.inputlv3_960210)
+        if choose_seeds[31415926]:
+            levels[0].extend(inputs.inputlv1_31415926)
+            levels[1].extend(inputs.inputlv2_31415926)
+            levels[2].extend(inputs.inputlv3_31415926)
 
-    # print(ex2.ids)
-    cnt = [0, 0, 0, 0] # TA examples, lv1, lv2, lv3
-    total = [0, 0, 0, 0]
-    flag = False
-    f = False
-    choose_seeds = {69:True, 42: True, 31415926:True, 960210: True, 'TA': True}
-    levels = [[],[], []]
-    if choose_seeds[69]:
-        levels[0].extend(inputs.inputlv1_69)
-        levels[1].extend(inputs.inputlv2_69)
-        levels[2].extend(inputs.inputlv3_69)
-    if choose_seeds[42]:
-        levels[0].extend(inputs.inputlv1_42)
-        levels[1].extend(inputs.inputlv2_42)
-        levels[2].extend(inputs.inputlv3_42)
-    if choose_seeds[960210]:
-        levels[0].extend(inputs.inputlv1_960210)
-        levels[1].extend(inputs.inputlv2_960210)
-        levels[2].extend(inputs.inputlv3_960210)
-    if choose_seeds[31415926]:
-        levels[0].extend(inputs.inputlv1_31415926)
-        levels[1].extend(inputs.inputlv2_31415926)
-        levels[2].extend(inputs.inputlv3_31415926)
-    print("\n----------------TA tests:----------------\n")
-    if choose_seeds['TA']:
-        for number, input in enumerate(inputs.inputs):
-            if f:
-                my_checker = GringottsChecker(input)
-                print(my_checker.check_controller())
-            check_board(input, 0)
+        # Calculate total tests for each level
+        total_tests_per_level = [calculate_total_tests(level) for level in levels]
+        current_progress = [0, 0, 0]  # Track progress for each level
 
-    if len(levels[0]) > 0:
-        print("\n----------------level one tests:----------------\n")
-        total_tests = calculate_total_tests(levels[0])
-        progress = 0
-        for number, input in enumerate(levels[0]):
-            check_board(input, 1, flag)
-            progress += sum(1 for row in input['full_map'] for item in row if item == 0) * 6
-            update_loading_bar(progress, total_tests)
-        if f:
-            for input in levels[0]:
-                print(GringottsChecker(input).check_controller())
+        print("\n----------------TA tests:----------------\n")
+        if choose_seeds['TA']:
+            for input in inputs.inputs:
+                check_board(input, 0)
 
-    if len(levels[1]) > 0:
-        print("\n----------------level two tests:----------------\n")
-        total_tests = calculate_total_tests(levels[1])
-        progress = 0
-        for number, input in enumerate(levels[1]):
-            check_board(input, 2, flag)
-            progress += sum(1 for row in input['full_map'] for item in row if item == 0) * 6
-            update_loading_bar(progress, total_tests)
-        if f:
-            for input in levels[1]:
-                print(GringottsChecker(input).check_controller())
+        # Iterate through levels
+        for i, (level, total_tests) in enumerate(zip(levels, total_tests_per_level)):
+            if len(level) > 0:
+                print(f"\n----------------level {i + 1} tests:----------------\n")
+                for input in level:
+                    check_board(input, i + 1, flag)
+                    # Update progress based on the actual number of tests performed
+                    zeros_in_board = sum(1 for row in input['full_map'] for item in row if item == 0)
+                    current_progress[i] += zeros_in_board * 8  # 8 orientations per position
+                    update_loading_bar(current_progress[i], total_tests)
 
-    if len(levels[2]) > 0:
-        print("\n----------------level three tests:----------------\n")
-        total_tests = calculate_total_tests(levels[2])
-        progress = 0
-        for number, input in enumerate(levels[2]):
-            check_board(input, 3, flag)
-            progress += sum(1 for row in input['full_map'] for item in row if item == 0) * 6
-            update_loading_bar(progress, total_tests)
-        if f:
-            for input in levels[2]:
-                print(GringottsChecker(input).check_controller())
-    results = [(c, t, round(c / t, 3)) for c, t in zip(cnt, total) if t > 0]
-    print("passed, total number, Percent of boards passed")
-    print(results)
-    print(f"Overall stats, solved {sum(cnt)} boards out of {sum(total)} with an accuracy of: {round(sum(cnt) / sum(total), 3)} ")
-
+        # Print results
+        results = [(c, t, round(c / t, 3)) for c, t in zip(cnt, total) if t > 0]
+        print("\npassed, total number, Percent of boards passed")
+        print(results)
+        print(
+            f"Overall stats, solved {sum(cnt)} boards out of {sum(total)} with an accuracy of: {round(sum(cnt) / sum(total), 3)} ")

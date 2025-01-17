@@ -12,7 +12,6 @@ class GringottsController:
         self.known_vaults = set()
         self.potential_traps = set()
         self.visited = {harry_loc}
-        self.visited_twice = set()
         self.checked_vaults = set()
         self.path = [harry_loc]
         self.dead_ends = set()
@@ -84,39 +83,6 @@ class GringottsController:
                     best_vault = vault
         return best_vault, best_path
 
-    def _evaluate_zone(self, zone_coords):
-        score = 0
-        for coord in zone_coords:
-            if coord not in self.visited and coord not in self.known_dragons:
-                neighbors = self._get_adjacent_tiles(*coord)
-                unvisited = sum(1 for n in neighbors if n not in self.visited)
-                if unvisited:
-                    score += 1
-                    path = self._astar(self.harry_loc, coord)
-                    if path: score += 2
-        return score
-
-    def discovered_amounts(self):
-        adjacent = self._get_adjacent_tiles(*self.harry_loc)
-        unvisited_adj = [adj for adj in adjacent if
-                         adj in self.known_safe and adj not in self.known_dragons and adj not in self.visited]
-        if unvisited_adj: return 'move', unvisited_adj[0]
-
-        best_score, best_move = -1, None
-        for zone in self.zones.values():
-            score = self._evaluate_zone(zone)
-            if score > best_score:
-                for coord in zone:
-                    if coord not in self.visited and coord not in self.known_dragons:
-                        path = self._astar(self.harry_loc, coord)
-                        if path:
-                            best_score = score
-                            best_move = path[0]
-                            break
-        if best_move:
-            return ('destroy', best_move) if best_move in self.potential_traps else ('move', best_move)
-        return "wait",
-
     def get_next_action(self, observations):
         self._process_observations(observations)
         if self.harry_loc in self.known_vaults and self.harry_loc not in self.checked_vaults:
@@ -141,7 +107,6 @@ class GringottsController:
                                            loc not in self.visited,
                                            loc in self.potential_traps,
                                            loc not in self.known_dragons,
-                                           loc not in self.visited_twice,
                                            loc not in self.dead_ends),
                           reverse=True)
 
@@ -158,15 +123,10 @@ class GringottsController:
                 self.path.append(adj)
                 return "move", adj
 
-        self.backtrack_counter += 1
-        if self.backtrack_counter > 10:
-            self.dead_ends.update(self.visited_twice)
-            self.backtrack_counter = 0
+        self.backtrack_counter = (self.backtrack_counter + 1) % 11
 
-        if self.path:
-            for i in range(len(self.path) - 1, -1, -1):
-                pos = self.path[i]
-                if pos in self.dead_ends: continue
+        for pos in reversed(self.path):
+            if pos not in self.dead_ends:
                 unvisited = [adj for adj in self._get_adjacent_tiles(*pos)
                              if adj not in self.visited.union(self.known_dragons)]
                 if unvisited:
@@ -175,8 +135,36 @@ class GringottsController:
                         next_move = path[0]
                         self.harry_loc = next_move
                         self.path.append(next_move)
-                        if next_move in self.visited:
-                            self.visited_twice.add(next_move)
                         return "move", next_move
 
-        return self.discovered_amounts()
+        unvisited_target = self._find_nearest_unvisited()
+        if unvisited_target:
+            if unvisited_target in self.potential_traps:
+                return "destroy", unvisited_target
+            self.harry_loc = unvisited_target
+            self.path.append(unvisited_target)
+            return "move", unvisited_target
+
+    def _find_nearest_unvisited(self):
+        min_dist = float('inf')
+        best_target = None
+
+        curr_y, curr_x = self.harry_loc
+        mid_y, mid_x = self.map_shape[0] // 2, self.map_shape[1] // 2
+
+        for y in range(self.map_shape[0]):
+            for x in range(self.map_shape[1]):
+                if (y, x) not in self.visited and (y, x) not in self.known_dragons:
+                    same_quadrant = (y > mid_y) == (curr_y > mid_y) and (x > mid_x) == (curr_x > mid_x)
+                    dist = abs(y - curr_y) + abs(x - curr_x)
+                    if same_quadrant:
+                        dist *= 0.8
+
+                    if dist < min_dist:
+                        path = self._astar(self.harry_loc, (y, x))
+                        if path:
+                            min_dist = dist
+                            best_target = path[0]
+
+        return best_target if best_target else None
+
