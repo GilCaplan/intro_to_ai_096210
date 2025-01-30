@@ -58,25 +58,25 @@ def Value_Iteration(self):
     for t in range(self.rounds + 1):
         vs = {}
         for state in self.all_states:
-            state_key = str(self.state_to_key(state))
+            state_key = str(state_to_key(state))
             actions = self.get_actions(state)
             action_values = []
 
             for action in actions:
-                immediate_reward = self.calculate_reward(state, action)
+                immediate_reward = calculate_reward(state, action)
                 new_states, probs = self.apply_action(state, action)
 
                 future_value = 0
                 if t > 0:
                     for n_state, prob in zip(new_states, probs):
-                        next_key = str(self.state_to_key(n_state))
+                        next_key = str(state_to_key(n_state))
                         future_value += prob * V[t - 1][next_key]['score']
 
                 if action == ('termination',):
                     future_value = 0
                 elif action == ('reset',):
                     if t > 0:
-                        initial_key = str(self.state_to_key(self.start_state))
+                        initial_key = str(state_to_key(self.start_state))
                         future_value = V[t - 1][initial_key]['score']
 
                 total_value = immediate_reward + future_value
