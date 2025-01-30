@@ -20,6 +20,7 @@ class OptimalWizardAgent:
         self.all_states = self.compute_states()
         self.rounds = initial['turns_to_go']
         self.cache = ValueIterationCache()
+        self.GAMMA = 0.9
         self.V = self.Value_Iteration()
         self.time = self.rounds
 
@@ -136,7 +137,7 @@ class OptimalWizardAgent:
         if action == "reset":
             return RESET_REWARD
         if action == "terminate":
-            return -1
+            return 0
 
         if isinstance(action, tuple):
             de_locations = set(state['death_eaters'].values())
@@ -151,10 +152,9 @@ class OptimalWizardAgent:
 
     def apply_action(self, state, action):
         if action == "reset":
-            return [copy.deepcopy(self.start_state)], [1.0]
-
+            return [self.start_state], [1.0]
         if action == "terminate":
-            return [copy.deepcopy(state)], [1.0]
+            return [state], [1.0]
 
         next_state = copy.deepcopy(state)
 
@@ -162,75 +162,67 @@ class OptimalWizardAgent:
         for act in action:
             if act[0] == 'move':
                 next_state['wizards'][act[1]] = act[2]
-            elif act[0] == 'destroy' and len(h_name := [h for h, loc in state['horcrux'].items() if loc == act[2]]) > 0:
-                horcrux_name = h_name[0]
-                next_state['horcrux'] = {hor: state['horcrux'][hor] for hor in state['horcrux'].keys() if
-                                         hor != horcrux_name}
+            elif act[0] == 'destroy':
+                if act[2] in next_state['horcrux']:
+                    del next_state['horcrux'][act[2]]
 
-        # Generate death eater transitions
-        de_states = []
-        de_probs = []
+        # Generate death eater transitions with proper probabilities
+        possible_states = []
+        probabilities = []
 
+        # Handle death eater movement probabilities
         for de in state['death_eaters']:
             path = self.initial['death_eaters'][de]['path']
-            curr_loc = state['death_eaters'][de]
+            curr_idx = next(i for i, loc in enumerate(path) if loc == state['death_eaters'][de])
 
-            # Find current position in path
-            curr_pos = [i for i, loc in enumerate(path) if loc == curr_loc]
-            if not curr_pos:  # If location not found in path (shouldn't happen), just stay
-                new_state = copy.deepcopy(next_state)
-                de_states.append(new_state)
-                de_probs.append(1.0)
-                continue
-
-            curr_idx = curr_pos[0]
-            # At start of path
             if curr_idx == 0:
-                if len(path) > 1:
-                    possible_moves = [(path[0], 0.5), (path[1], 0.5)]  # Stay
-                else:
-                    possible_moves = [(path[0], 1)]
-
-            # At end of path
+                moves = [(0, 0.5), (1, 0.5)]
             elif curr_idx == len(path) - 1:
-                possible_moves = [(path[curr_idx], 0.5), (path[curr_idx - 1], 0.5)]
-
-            # Middle of path
+                moves = [(curr_idx, 0.5), (curr_idx - 1, 0.5)]
             else:
-                possible_moves = [
-                    (path[curr_idx - 1], 1 / 3),  # Back
-                    (path[curr_idx], 1 / 3),  # Stay
-                    (path[curr_idx + 1], 1 / 3)  # Forward
-                ]
+                moves = [(curr_idx - 1, 1 / 3), (curr_idx, 1 / 3), (curr_idx + 1, 1 / 3)]
 
-            for new_loc, prob in possible_moves:
+            for idx, prob in moves:
                 new_state = copy.deepcopy(next_state)
-                new_state['death_eaters'][de] = new_loc
-                de_states.append(new_state)
-                de_probs.append(prob)
+                new_state['death_eaters'][de] = path[idx]
+                possible_states.append(new_state)
+                probabilities.append(prob)
 
+        # Handle horcrux movement probabilities
         final_states = []
         final_probs = []
 
-        for de_state, de_prob in zip(de_states, de_probs):
-            for horcrux in state['horcrux'].keys():
-                if horcrux in de_state['horcrux']:
+        for base_state, base_prob in zip(possible_states, probabilities):
+            horcrux_states = [base_state]
+            horcrux_probs = [1.0]
+
+            for horcrux in state['horcrux']:
+                if horcrux in base_state['horcrux']:
                     prob_change = self.initial['horcrux'][horcrux]['prob_change_location']
-
-                    # Stay in current location
-                    stay_state = copy.deepcopy(de_state)
-                    final_states.append(stay_state)
-                    final_probs.append(de_prob * (1 - prob_change))
-
-                    # Move to possible locations
                     possible_locs = self.initial['horcrux'][horcrux]['possible_locations']
-                    prob_per_loc = prob_change / len(possible_locs)
 
-                    for loc in possible_locs:
-                        new_state = copy.deepcopy(de_state)
-                        new_state['horcrux'][horcrux] = loc
-                        final_states.append(new_state)
-                        final_probs.append(de_prob * prob_per_loc)
+                    new_states = []
+                    new_probs = []
+
+                    for curr_state, curr_prob in zip(horcrux_states, horcrux_probs):
+                        # Stay in current location
+                        stay_state = copy.deepcopy(curr_state)
+                        new_states.append(stay_state)
+                        new_probs.append(curr_prob * (1 - prob_change))
+
+                        # Move to new locations
+                        for new_loc in possible_locs:
+                            if new_loc != curr_state['horcrux'][horcrux]:
+                                move_state = copy.deepcopy(curr_state)
+                                move_state['horcrux'][horcrux] = new_loc
+                                new_states.append(move_state)
+                                new_probs.append(curr_prob * prob_change / len(possible_locs))
+
+                    horcrux_states = new_states
+                    horcrux_probs = new_probs
+
+            final_states.extend(horcrux_states)
+            final_probs.extend([p * base_prob for p in horcrux_probs])
 
         return final_states, final_probs
 
@@ -238,11 +230,12 @@ class OptimalWizardAgent:
         cached_values = self.cache.load_cached_values(self.initial, self.rounds)
         if cached_values is not None:
             return json.dumps(cached_values)
+
         V = []
         for t in range(self.rounds + 1):
             vs = {}
             for state in self.all_states:
-                state_key = str(self.state_to_key(state))
+                state_key = self.state_to_key(state)  # Use tuple-based state key instead of string
                 actions = self.get_actions(state)
                 action_values = []
 
@@ -250,21 +243,17 @@ class OptimalWizardAgent:
                     immediate_reward = self.calculate_reward(state, action)
                     new_states, probs = self.apply_action(state, action)
 
-                    assert abs(sum(probs) - 1.0) < 1e-10  # Verify probabilities sum to 1
-
-                    GAMMA = 0.9  # Add this at the top of the class
-
                     future_value = 0
                     if t > 0:
                         if action == "terminate":
                             future_value = 0
                         elif action == "reset":
-                            initial_key = str(self.state_to_key(self.start_state))
-                            future_value = GAMMA * V[t - 1][initial_key]['score']  # Apply gamma here
+                            initial_key = self.state_to_key(self.start_state)
+                            future_value = self.GAMMA * V[t - 1][initial_key]['score']
                         else:
                             for n_state, prob in zip(new_states, probs):
-                                next_key = str(self.state_to_key(n_state))
-                                future_value += prob * GAMMA * V[t - 1][next_key]['score']  # Apply gamma here
+                                next_key = self.state_to_key(n_state)
+                                future_value += prob * self.GAMMA * V[t - 1][next_key]['score']
 
                     total_value = immediate_reward + future_value
                     action_values.append((action, total_value))
@@ -272,6 +261,7 @@ class OptimalWizardAgent:
                 best_action, max_score = max(action_values, key=lambda x: x[1])
                 vs[state_key] = {'action': best_action, 'score': max_score}
             V.append(vs)
+
         self.cache.save_values(self.initial, self.rounds, V)
         return json.dumps(V)
 
