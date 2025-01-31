@@ -52,14 +52,11 @@ class OptimalWizardAgent:
         self.wizards = initial['wizards']
         self.horcrux = initial['horcrux']
         self.death_eaters = initial['death_eaters']
-        self.num_horcruxes = len(self.horcrux)
         self.all_states = self.compute_states()
         self.rounds = initial['turns_to_go']
         self.cache = ValueIterationCache()
-        self.GAMMA = 0.9
         self.V = self.Value_Iteration()
-        self.time = self.rounds
-        self.time_s = 0
+        self.time = initial['turns_to_go']
 
     def compute_states(self):
         wiz_locs, death_eaters_locs, horcrux_locs = {}, {}, {}
@@ -235,35 +232,34 @@ class OptimalWizardAgent:
         for t in range(self.rounds + 1):
             vs = {}
             for state in self.all_states:
-                state_key = state_to_key(state)  # Use tuple-based state key instead of string
+                state_key = state_to_key(state)
+                if t == 0:
+                    vs[state_key] = {'action': 'terminate', 'score': 0}
+                    continue
+
                 actions = self.get_actions(state)
-                action_values = []
+                best_score = float('-inf')
+                best_action = None
 
                 for action in actions:
                     immediate_reward = calculate_reward(state, action)
-                    new_states, probs = self.apply_action(state, action)
-
-                    future_value = 0
-                    if t == 0:
-                        pass
-                    elif action == "terminate":
-                        future_value = 0
-                    elif action == "reset":
-                        initial_key = state_to_key(self.start_state)
-                        future_value = self.GAMMA * V[t - 1][initial_key]['score']
+                    if action == "terminate":
+                        total_value = immediate_reward
                     else:
-                        for n_state, prob in zip(new_states, probs):
-                            # try:
-                            next_key = state_to_key(n_state)
-                            future_value += prob * self.GAMMA * V[t - 1][next_key]['score']
-                            # except KeyError:
-                            #     pass
+                        new_states, probs = self.apply_action(state, action)
+                        future_value = 0
 
-                    total_value = immediate_reward + future_value
-                    action_values.append((action, total_value))
+                        for next_state, prob in zip(new_states, probs):
+                            next_key = state_to_key(next_state)
+                            future_value += prob * V[t - 1][next_key]['score']
 
-                best_action, max_score = max(action_values, key=lambda x: x[1])
-                vs[state_key] = {'action': best_action, 'score': max_score}
+                        total_value = immediate_reward + future_value
+
+                    if total_value > best_score:
+                        best_score = total_value
+                        best_action = action
+
+                vs[state_key] = {'action': best_action, 'score': best_score}
             V.append(vs)
 
         self.cache.save_values(self.initial, self.rounds, V)
@@ -281,9 +277,7 @@ class OptimalWizardAgent:
         values = json.loads(self.V)
         state_key = str(state_to_key(simplify_state(state)))
         best_action = values[max(0, self.time)][state_key]['action']
-        # max(0, self.time)
         self.time -= 1
-        self.time_s += 1
         return self.convert_to_tuples(best_action)
 
 
@@ -305,6 +299,7 @@ def clear_cache():
                 os.remove(file_path)
             except OSError:
                 pass
+
 class ValueIterationCache:
     def __init__(self, cache_dir="vi_cache"):
         self.cache_dir = cache_dir
@@ -345,54 +340,4 @@ class ValueIterationCache:
             return True
         except IOError:
             return False
-
-
-# Modified OptimalWizardAgent class methods
-def Value_Iteration(self):
-    cache = ValueIterationCache()
-    cached_values = cache.load_cached_values(self.initial, self.rounds)
-
-    if cached_values is not None:
-        return json.dumps(cached_values)
-
-    # Original Value Iteration calculation
-    V = []
-    for t in range(self.rounds + 1):
-        vs = {}
-        for state in self.all_states:
-            state_key = str(state_to_key(state))
-            actions = self.get_actions(state)
-            actions_depth_2 = []
-            for action in actions:
-                actions_depth_2.extend(self.get_actions(self.apply_action(state, action)))
-            actions.extend(actions_depth_2)
-            action_values = []
-
-            for action in actions:
-                immediate_reward = calculate_reward(state, action)
-                new_states, probs = self.apply_action(state, action)
-
-                future_value = 0
-                if t > 0:
-                    for n_state, prob in zip(new_states, probs):
-                        next_key = str(state_to_key(n_state))
-                        future_value += prob * V[t - 1][next_key]['score']
-
-                if action == ('termination',):
-                    future_value = 0
-                elif action == ('reset',):
-                    if t > 0:
-                        initial_key = str(state_to_key(self.start_state))
-                        future_value = V[t - 1][initial_key]['score']
-
-                total_value = immediate_reward + future_value
-                action_values.append((action, total_value))
-
-            best_action, max_score = max(action_values, key=lambda x: x[1])
-            vs[state_key] = {'action': best_action, 'score': max_score}
-        V.append(vs)
-
-    # Cache the results before returning
-    cache.save_values(self.initial, self.rounds, V)
-    return json.dumps(V)
 

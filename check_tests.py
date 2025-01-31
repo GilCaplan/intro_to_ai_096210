@@ -313,7 +313,7 @@ def main_one_iteration():
 
 
 def calculate_average_scores_50():
-    inputs = [op_inputs[0]]
+    inputs = op_inputs
 
     # יצירת רשימת ניקוד באורך len(inputs), מאותחלת ל-0
     score = [0] * len(inputs)
