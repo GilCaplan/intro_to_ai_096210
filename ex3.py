@@ -56,9 +56,10 @@ class OptimalWizardAgent:
         self.all_states = self.compute_states()
         self.rounds = initial['turns_to_go']
         self.cache = ValueIterationCache()
-        self.GAMMA = 1
+        self.GAMMA = 0.9
         self.V = self.Value_Iteration()
         self.time = self.rounds
+        self.time_s = 0
 
     def compute_states(self):
         wiz_locs, death_eaters_locs, horcrux_locs = {}, {}, {}
@@ -279,7 +280,9 @@ class OptimalWizardAgent:
         values = json.loads(self.V)
         state_key = str(state_to_key(simplify_state(state)))
         best_action = values[max(0, self.time)][state_key]['action']
+        # max(0, self.time)
         self.time -= 1
+        self.time_s += 1
         return self.convert_to_tuples(best_action)
 
 
