@@ -14,8 +14,8 @@ DEATH_EATER_CATCH_REWARD = -1
 def state_to_key(state):
     wiz = tuple((name, loc) for name, loc in state['wizards'].items())
     de = tuple((name, loc) for name, loc in state['death_eaters'].items())
-    hor = tuple((name, loc) for name, loc in state['horcrux'].items())
-    return wiz + de + hor
+    hor = tuple((name, loc) for name, loc in state['horcrux'].items() if loc is not None)
+    return str(wiz + de + hor)
 
 
 def calculate_reward(state, action):
@@ -27,11 +27,11 @@ def calculate_reward(state, action):
 
     if isinstance(action, tuple):
         de_locations = set(state['death_eaters'].values())
-        for wizard, loc in state['wizards'].items():
+        for _, loc in state['wizards'].items():
             if loc in de_locations:
                 reward += DEATH_EATER_CATCH_REWARD
         for act in action:
-            if act[0] == 'destroy' and act[2] in state['horcrux'].keys():
+            if act[0] == 'destroy' and act[2] in state['horcrux'].keys() and state['wizards'][act[1]] == state['horcrux'][act[2]]:
                 reward += DESTROY_HORCRUX_REWARD
 
     return reward
@@ -77,10 +77,7 @@ class OptimalWizardAgent:
 
         horcrux_locs = {}
         for hor in self.horcrux:
-            horcrux_locs[hor] = []
-            for loc in self.horcrux[hor]['possible_locations']:
-                horcrux_locs[hor].append(loc)
-            horcrux_locs[hor].append(None)
+            horcrux_locs[hor] = [loc for loc in self.horcrux[hor]['possible_locations']] + [None]
 
         wizard_combinations = tuple(product(*[wiz_locs[wizard] for wizard in wiz_locs]))
         de_combinations = tuple(product(*[death_eaters_locs[de] for de in death_eaters_locs]))
@@ -168,19 +165,22 @@ class OptimalWizardAgent:
         for de in state['death_eaters']:
             path = self.initial['death_eaters'][de]['path']
             curr_idx = next(i for i, loc in enumerate(path) if loc == state['death_eaters'][de])
-
-            if curr_idx == 0:
+            moves = []
+            if len(path) == 1:
+                moves = [(curr_idx, 1)]
+            elif curr_idx == 0:
                 moves = [(0, 0.5), (1, 0.5)]
-            elif curr_idx == len(path) - 1:
+            elif curr_idx == len(path) - 1 and len(path) > 1:
                 moves = [(curr_idx, 0.5), (curr_idx - 1, 0.5)]
             else:
-                moves = [(curr_idx - 1, 1 / 3), (curr_idx, 1 / 3), (curr_idx + 1, 1 / 3)]
-
-            for idx, prob in moves:
-                new_state = copy.deepcopy(next_state)
-                new_state['death_eaters'][de] = path[idx]
-                possible_states.append(new_state)
-                probabilities.append(prob)
+                if 0 < curr_idx < len(path) - 1:
+                    moves = [(curr_idx - 1, 1 / 3), (curr_idx, 1 / 3), (curr_idx + 1, 1 / 3)]
+            if len(moves) > 0:
+                for idx, prob in moves:
+                    new_state = copy.deepcopy(next_state)
+                    new_state['death_eaters'][de] = path[idx]
+                    possible_states.append(new_state)
+                    probabilities.append(prob)
 
         final_states = []
         final_probs = []
@@ -243,8 +243,11 @@ class OptimalWizardAgent:
                             future_value = self.GAMMA * V[t - 1][initial_key]['score']
                         else:
                             for n_state, prob in zip(new_states, probs):
+                                # try:
                                 next_key = state_to_key(n_state)
                                 future_value += prob * self.GAMMA * V[t - 1][next_key]['score']
+                                # except KeyError:
+                                #     pass
 
                     total_value = immediate_reward + future_value
                     action_values.append((action, total_value))
@@ -281,7 +284,15 @@ class WizardAgent:
     def act(self, state):
         raise NotImplementedError
 
-
+def clear_cache():
+    """Delete all cached Value Iteration files."""
+    if os.path.exists("vi_cache"):
+        for file in os.listdir("vi_cache"):
+            file_path = os.path.join("vi_cache", file)
+            try:
+                os.remove(file_path)
+            except OSError:
+                pass
 class ValueIterationCache:
     def __init__(self, cache_dir="vi_cache"):
         self.cache_dir = cache_dir
@@ -339,6 +350,10 @@ def Value_Iteration(self):
         for state in self.all_states:
             state_key = str(state_to_key(state))
             actions = self.get_actions(state)
+            actions_depth_2 = []
+            for action in actions:
+                actions_depth_2.extend(self.get_actions(self.apply_action(state, action)))
+            actions.extend(actions_depth_2)
             action_values = []
 
             for action in actions:
@@ -368,3 +383,4 @@ def Value_Iteration(self):
     # Cache the results before returning
     cache.save_values(self.initial, self.rounds, V)
     return json.dumps(V)
+

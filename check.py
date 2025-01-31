@@ -7,7 +7,6 @@ import time
 from copy import deepcopy
 from itertools import product
 
-
 RESET_PENALTY = 2
 DESTROY_HORCRUX_REWARD = 2
 INIT_TIME_LIMIT = 300
@@ -252,6 +251,7 @@ def main():
     """
     main function
     """
+
     print(f"IDS: {ids}")
     for an_input in inputs:
         try:
