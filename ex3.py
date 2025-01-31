@@ -244,19 +244,20 @@ class OptimalWizardAgent:
                     new_states, probs = self.apply_action(state, action)
 
                     future_value = 0
-                    if t > 0:
-                        if action == "terminate":
-                            future_value = 0
-                        elif action == "reset":
-                            initial_key = state_to_key(self.start_state)
-                            future_value = self.GAMMA * V[t - 1][initial_key]['score']
-                        else:
-                            for n_state, prob in zip(new_states, probs):
-                                # try:
-                                next_key = state_to_key(n_state)
-                                future_value += prob * self.GAMMA * V[t - 1][next_key]['score']
-                                # except KeyError:
-                                #     pass
+                    if t == 0:
+                        pass
+                    elif action == "terminate":
+                        future_value = 0
+                    elif action == "reset":
+                        initial_key = state_to_key(self.start_state)
+                        future_value = self.GAMMA * V[t - 1][initial_key]['score']
+                    else:
+                        for n_state, prob in zip(new_states, probs):
+                            # try:
+                            next_key = state_to_key(n_state)
+                            future_value += prob * self.GAMMA * V[t - 1][next_key]['score']
+                            # except KeyError:
+                            #     pass
 
                     total_value = immediate_reward + future_value
                     action_values.append((action, total_value))
