@@ -56,7 +56,7 @@ class OptimalWizardAgent:
         self.all_states = self.compute_states()
         self.rounds = initial['turns_to_go']
         self.cache = ValueIterationCache()
-        self.GAMMA = 0.9
+        self.GAMMA = 1
         self.V = self.Value_Iteration()
         self.time = self.rounds
 
@@ -193,21 +193,29 @@ class OptimalWizardAgent:
                 if horcrux in base_state['horcrux']:
                     prob_change = self.initial['horcrux'][horcrux]['prob_change_location']
                     possible_locs = self.initial['horcrux'][horcrux]['possible_locations']
+                    num_locations = len(possible_locs)
 
                     new_states = []
                     new_probs = []
 
                     for curr_state, curr_prob in zip(horcrux_states, horcrux_probs):
-                        stay_state = copy.deepcopy(curr_state)
-                        new_states.append(stay_state)
-                        new_probs.append(curr_prob * (1 - prob_change))
+                        current_loc = curr_state['horcrux'][horcrux]
 
+                        # Calculate probability of staying in the same spot
+                        # This includes not changing (1-p) + changing but picking same spot (p/num_locations)
+                        stay_state = copy.deepcopy(curr_state)
+                        stay_prob = (1 - prob_change) + (prob_change / num_locations)
+                        new_states.append(stay_state)
+                        new_probs.append(curr_prob * stay_prob)
+
+                        # Calculate probability of moving to each other location
+                        # For each other location, probability is p/num_locations
                         for new_loc in possible_locs:
-                            if new_loc != curr_state['horcrux'][horcrux]:
+                            if new_loc != current_loc:
                                 move_state = copy.deepcopy(curr_state)
                                 move_state['horcrux'][horcrux] = new_loc
                                 new_states.append(move_state)
-                                new_probs.append(curr_prob * prob_change / len(possible_locs))
+                                new_probs.append(curr_prob * (prob_change / num_locations))
 
                     horcrux_states = new_states
                     horcrux_probs = new_probs
