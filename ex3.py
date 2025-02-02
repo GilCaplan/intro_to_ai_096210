@@ -334,8 +334,6 @@ class WizardAgent(OptimalWizardAgent):
     def __init__(self, initial):
         super().__init__(initial)
 
-
-
     def act(self, state):
         values = json.loads(self.V)
         state_key = str(state_to_key(simplify_state(state)))
